@@ -167,7 +167,7 @@ public class ShowArticleActivity extends Activity implements IEntryModelUpdateLi
             return;
         }
 
-        setContentView(com.newsrob.R.layout.show_article);
+        setContentView(com.grazerss.R.layout.show_article);
 
         googleAdsUtil = new GoogleAdsUtil(getEntryManager());
 

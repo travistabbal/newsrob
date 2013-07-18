@@ -217,7 +217,7 @@ public abstract class AbstractNewsRobListActivity extends ListActivity implement
             progressContainer = (LinearLayout) findViewById(R.id.progress_container);
 
             boolean isLightTheme = getEntryManager().isLightColorSchemeSelected();
-            findViewById(com.newsrob.R.id.control_panel).setBackgroundResource(
+            findViewById(com.grazerss.R.id.control_panel).setBackgroundResource(
                     isLightTheme ? R.drawable.list_header_background : R.drawable.list_header_background_dark);
             findViewById(R.id.action_bar).setBackgroundResource(
                     isLightTheme ? R.drawable.label_background : R.drawable.label_background_dark);

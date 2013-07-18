@@ -18,15 +18,11 @@
 		android:layout_height="wrap_content">
 
 		<ImageView
-			android:id="@+id/newsrob_logo"
-
-			android:src="@drawable/gen_logo_small_actionbar"
-
-			style="@style/TitleBarAction"
-
-			android:layout_height="wrap_content"
-			android:layout_width="wrap_content" />
-
+		    android:id="@+id/newsrob_logo"
+		    style="@style/TitleBarAction"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:src="@drawable/gen_logo_small_actionbar" />
 
 		<ImageView
 			style="@style/TitleBarSeparator" />
