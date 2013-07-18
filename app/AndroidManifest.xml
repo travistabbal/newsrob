@@ -99,7 +99,7 @@
 
             <intent-filter>
                 <action
-                    android:name="com.newsrob.VIEW" />
+                    android:name="com.grazerss.VIEW" />
                 <category
                     android:name="android.intent.category.DEFAULT" />
 
@@ -128,7 +128,7 @@
 
         <!--
             <activity
-            android:name="com.newsrob.activities.DebugActivity"
+            android:name="com.grazerss.activities.DebugActivity"
             android:configChanges="orientation|keyboardHidden|keyboard"
             android:clearTaskOnLaunch="true"> <intent-filter> <action
             android:name="android.settings.ADD_ACCOUNT_SETTINGS" />
@@ -165,7 +165,7 @@
         <activity
             android:name="com.grazerss.activities.ShowMessageActivity"
             android:label="Show Message"
-            android:process="com.newsrob.message.show"
+            android:process="com.grazerss.message.show"
             android:configChanges="orientation|keyboardHidden|keyboard"
             android:theme="@android:style/Theme.Dialog" />
 
@@ -222,11 +222,11 @@
                 <action
                     android:name="com.twofortyfouram.locale.intent.action.FIRE_SETTING" />
                 <action
-                    android:name="com.newsrob.SYNC" />
+                    android:name="com.grazerss.SYNC" />
                 <action
-                    android:name="com.newsrob.UP_SYNC" />
+                    android:name="com.grazerss.UP_SYNC" />
                 <action
-                    android:name="com.newsrob.CANCEL_SYNC" />
+                    android:name="com.grazerss.CANCEL_SYNC" />
             </intent-filter>
         </receiver>
         <receiver
@@ -256,14 +256,14 @@
 
         <receiver
           android:name="com.grazerss.appwidget.UnreadWidgetProvider"
-            android:label="NewsRob\nUnread Count">
+            android:label="GrazeRSS\nUnread Count">
             <intent-filter>
                 <action
                     android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <!--
                 <intent-filter> <action
-                android:name="com.newsrob.MODEL_UPDATED" />
+                android:name="com.grazerss.MODEL_UPDATED" />
                 </intent-filter>
             -->
             <meta-data
@@ -272,13 +272,13 @@
         </receiver>
 
         <!--
-            <provider android:name="com.newsrob.search.SearchProvider"
+            <provider android:name="com.grazerss.search.SearchProvider"
             android:authorities="articles" android:syncable="false" />
         -->
 
         <provider
             android:name="com.grazerss.AssetContentProvider"
-            android:authorities="com.newsrob.assets" />
+            android:authorities="com.grazerss.assets" />
 
         <service
             android:name="com.grazerss.SynchronizationService"
