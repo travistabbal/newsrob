@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.newsrob"
+    package="com.grazerss"
     android:versionCode="489"
     android:versionName="4.8.9-Beta11">
 
@@ -40,7 +40,7 @@
     <application
         android:icon="@drawable/gen_app_icon"
         android:label="@string/app_name"
-        android:name="com.newsrob.NewsRob"
+        android:name="com.grazerss.NewsRob"
         android:theme="@android:style/Theme.Black"
         android:description="@string/app_description">
 
@@ -51,7 +51,7 @@
 
 
         <activity
-            android:name="com.newsrob.DashboardListActivity"
+            android:name="com.grazerss.DashboardListActivity"
             android:label="@string/dashboard_label"
             android:configChanges="orientation|keyboardHidden|keyboard"
             android:clearTaskOnLaunch="true"
@@ -66,7 +66,7 @@
         </activity>
 
         <activity
-            android:name="com.newsrob.activities.ArticleListActivity"
+            android:name="com.grazerss.activities.ArticleListActivity"
             android:label="@string/article_list_label"
             android:configChanges="orientation|keyboardHidden|keyboard"
             android:clearTaskOnLaunch="true"
@@ -82,7 +82,7 @@
 
 
         <activity
-            android:name="com.newsrob.activities.FeedListActivity"
+            android:name="com.grazerss.activities.FeedListActivity"
             android:label="@string/feed_list_label"
             android:configChanges="orientation|keyboardHidden|keyboard"
 
@@ -91,7 +91,7 @@
 
 
         <activity
-            android:name="com.newsrob.activities.ShowArticleActivity"
+            android:name="com.grazerss.activities.ShowArticleActivity"
             android:label="@string/show_article"
             android:launchMode="singleTop"
             android:configChanges="orientation|keyboardHidden|keyboard"
@@ -120,7 +120,7 @@
 
         </activity>
         <activity
-            android:name="com.newsrob.activities.AccountListActivity"
+            android:name="com.grazerss.activities.AccountListActivity"
             android:label="Accounts"
             android:configChanges="orientation|keyboardHidden|keyboard"
             android:clearTaskOnLaunch="true">
@@ -137,7 +137,7 @@
         -->
 
         <activity
-            android:name="com.newsrob.activities.LoginActivity"
+            android:name="com.grazerss.activities.LoginActivity"
             android:label="@string/login"
             android:launchMode="singleTask"
             android:theme="@android:style/Theme.Light"
@@ -145,38 +145,38 @@
 
 
         <activity
-            android:name="com.newsrob.activities.SettingsActivity"
+            android:name="com.grazerss.activities.SettingsActivity"
             android:theme="@android:style/Theme.Black"
 
             android:label="@string/settings_title" />
 
         <activity
-            android:name="com.newsrob.activities.ShowGoogleErrorActivity"
+            android:name="com.grazerss.activities.ShowGoogleErrorActivity"
             android:launchMode="singleTask"
             android:configChanges="orientation|keyboardHidden|keyboard"
             android:label="@string/show_google_error_activity_label" />
 
         <activity
-            android:name="com.newsrob.activities.ShowArticleInfoActivity"
+            android:name="com.grazerss.activities.ShowArticleInfoActivity"
             android:label="@string/show_entry_info"
             android:configChanges="orientation|keyboardHidden|keyboard"
             android:theme="@android:style/Theme.Dialog" />
 
         <activity
-            android:name="com.newsrob.activities.ShowMessageActivity"
+            android:name="com.grazerss.activities.ShowMessageActivity"
             android:label="Show Message"
             android:process="com.newsrob.message.show"
             android:configChanges="orientation|keyboardHidden|keyboard"
             android:theme="@android:style/Theme.Dialog" />
 
         <activity
-            android:name="com.newsrob.activities.ManageFeedActivity"
+            android:name="com.grazerss.activities.ManageFeedActivity"
             android:label="@string/menu_item_manage_feed"
             android:configChanges="orientation|keyboardHidden|keyboard"
             android:theme="@android:style/Theme.Dialog" />
 
         <activity
-            android:name="com.newsrob.activities.SubscribeFeedActivity"
+            android:name="com.grazerss.activities.SubscribeFeedActivity"
             android:label="Subscribe to Feed in Google Reader"
             android:configChanges="orientation|keyboardHidden|keyboard"
             android:exported="true">
@@ -195,7 +195,7 @@
         </activity>
 
         <activity
-            android:name="com.newsrob.appwidget.UnreadWidgetPrefActivity"
+            android:name="com.grazerss.appwidget.UnreadWidgetPrefActivitytPrefActivity"
             android:label="Configure Unread Widget"
             android:configChanges="orientation|keyboardHidden|keyboard"
             android:theme="@android:style/Theme.Dialog">
@@ -207,7 +207,7 @@
 
 
         <activity
-            android:name="com.newsrob.locale.MockEditSettingsActivity"
+            android:name="com.grazerss.locale.MockEditSettingsActivity"
             android:label="@string/app_name"
             android:icon="@drawable/newsrob_logo_32x32">
             <intent-filter>
@@ -217,7 +217,7 @@
         </activity>
 
         <receiver
-            android:name="com.newsrob.locale.FireReceiver">
+            android:name="com.grazerss.locale.FireReceiver">
             <intent-filter>
                 <action
                     android:name="com.twofortyfouram.locale.intent.action.FIRE_SETTING" />
@@ -230,10 +230,10 @@
             </intent-filter>
         </receiver>
         <receiver
-            android:name="com.newsrob.WakeupAndSynchronizeReceiver" />
+            android:name="com.grazerss.WakeupAndSynchronizeReceiver" />
 
         <receiver
-            android:name="com.newsrob.BootReceiver">
+            android:name="com.grazerss.BootReceiver">
             <intent-filter>
                 <action
                     android:name="android.intent.action.BOOT_COMPLETED" />
@@ -243,7 +243,7 @@
         </receiver>
 
         <receiver
-            android:name="com.newsrob.PackageChangedReceiver">
+            android:name="com.grazerss.PackageChangedReceiver">
             <intent-filter>
                 <action
                     android:name="android.intent.action.PACKAGE_REPLACED" />
@@ -255,7 +255,7 @@
         </receiver>
 
         <receiver
-            android:name="com.newsrob.appwidget.UnreadWidgetProvider"
+          android:name="com.grazerss.appwidget.UnreadWidgetProvider"
             android:label="NewsRob\nUnread Count">
             <intent-filter>
                 <action
@@ -277,15 +277,15 @@
         -->
 
         <provider
-            android:name="com.newsrob.AssetContentProvider"
+            android:name="com.grazerss.AssetContentProvider"
             android:authorities="com.newsrob.assets" />
 
         <service
-            android:name="com.newsrob.SynchronizationService"
+            android:name="com.grazerss.SynchronizationService"
             android:enabled="true" />
 
         <service
-            android:name="com.newsrob.appwidget.UnreadWidgetProvider$UpdateService" />
+        android:name="com.grazerss.appwidget.UnreadWidgetProvider$UpdateService" />
 
     </application>
 </manifest> 

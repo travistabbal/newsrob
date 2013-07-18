@@ -5,4 +5,4 @@
 	android:minHeight="72dp"
 	android:updatePeriodMillis="0"
 	android:initialLayout="@layout/unread_widget"
-	android:configure="com.newsrob.appwidget.UnreadWidgetPrefActivity" />	
+	android:configure="com.grazerss.appwidget.UnreadWidgetPrefActivity" />	
