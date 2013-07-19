@@ -18,7 +18,6 @@ import android.database.sqlite.SQLiteStatement;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.grazerss.R;
 import com.grazerss.BackendProvider.StateChange;
 import com.grazerss.search.SearchProvider;
 import com.grazerss.util.SQLiteOpenHelper;
@@ -31,7 +30,7 @@ public class DB extends SQLiteOpenHelper {
 
     private static final String ENTRIES_VIEW = "entries_view";
     private static final String DATABASE_NAME = "newsrob.db";
-    private static final int DATABASE_VERSION = 32;
+    private static final int DATABASE_VERSION = 33;
     private static final String CREATE_TABLE_TEMP_IDS_SQL = "CREATE TABLE IF NOT EXISTS temp_ids (atom_id TEXT PRIMARY KEY, timestamp INTEGER);";
     private static final String CLEAR_TEMP_TABLE_SQL = "DELETE FROM temp_ids;";
 
@@ -162,6 +161,7 @@ public class DB extends SQLiteOpenHelper {
         public static final String DOWNLOADED = "DOWNLOADED";
         public static final String AUTHOR = "AUTHOR";
         public static final String ENTRY_HASH = "ENTRY_HASH";
+        public static final String STORAGE_LOCATION = "STORAGE_LOCATION";
 
         static final String ERROR = "ERROR";
 
@@ -172,10 +172,10 @@ public class DB extends SQLiteOpenHelper {
 
         private static final String[][] FIELDS = { { __ID, "INTEGER PRIMARY KEY" }, { ATOM_ID, "TEXT" },
                 { ALTERNATE_URL, "TEXT" }, { CONTENT, "TEXT" }, { CONTENT_TYPE, "TEXT" }, { CONTENT_URL, "TEXT" },
-                { TITLE, "TEXT" }, { ENTRY_HASH, "TEXT" }, { FEED_TITLE, "TEXT" }, { FEED_ID, "INTEGER" },
-                { READ_STATE, "INTEGER" }, { READ_STATE_PENDING, "INTEGER" }, { STARRED_STATE, "INTEGER" },
-                { STARRED_STATE_PENDING, "INTEGER" }, { SHARED_STATE, "INTEGER" }, { LIKED_STATE, "INTEGER" },
-                { SHARED_STATE_PENDING, "INTEGER" }, { PINNED_STATE_PENDING, "INTEGER" },
+                { TITLE, "TEXT" }, { ENTRY_HASH, "TEXT" }, { STORAGE_LOCATION, "TEXT" }, { FEED_TITLE, "TEXT" },
+                { FEED_ID, "INTEGER" }, { READ_STATE, "INTEGER" }, { READ_STATE_PENDING, "INTEGER" },
+                { STARRED_STATE, "INTEGER" }, { STARRED_STATE_PENDING, "INTEGER" }, { SHARED_STATE, "INTEGER" },
+                { LIKED_STATE, "INTEGER" }, { SHARED_STATE_PENDING, "INTEGER" }, { PINNED_STATE_PENDING, "INTEGER" },
                 { LIKED_STATE_PENDING, "INTEGER" }, { FRIENDS_SHARED_STATE, "INTEGER" }, { SHARED_BY_FRIEND, "TEXT" },
                 { UPDATED_UTC, "INTEGER" }, { DOWNLOADED, "INTEGER" }, { ERROR, "TEXT" }, { AUTHOR, "TEXT" },
                 { INSERTED_AT, "INTEGER" }, { TYPE, "TEXT" }, { NOTE_SUBMITTED_STATE, "INTEGER" }, { NOTE, "TEXT" },
@@ -572,6 +572,12 @@ public class DB extends SQLiteOpenHelper {
         if (oldVersion < 32) {
             db.execSQL("DROP TABLE IF EXISTS temp_ids_READ_HASHES;");
         }
+        if (oldVersion < 33) {
+            db.execSQL("ALTER TABLE entries ADD COLUMN " + Entries.STORAGE_LOCATION + " TEXT;");
+            db.execSQL("DROP VIEW IF EXISTS entries_view;");
+            Log.d(TAG, "Re-Creating entries view.");
+            db.execSQL(context.getString(R.string.sql_create_view));
+        }
 
     }
 
@@ -682,6 +688,7 @@ public class DB extends SQLiteOpenHelper {
         Entry entry = new Entry(cursor.getLong(cursor.getColumnIndex(Entries.__ID)));
         entry.setAtomId(getStringValueFromCursor(cursor, Entries.ATOM_ID));
         entry.setHash(getStringValueFromCursor(cursor, Entries.ENTRY_HASH));
+        entry.setStorageLocation(getStringValueFromCursor(cursor, Entries.STORAGE_LOCATION));
 
         entry.setAlternateHRef(getStringValueFromCursor(cursor, Entries.ALTERNATE_URL));
 
@@ -872,6 +879,7 @@ public class DB extends SQLiteOpenHelper {
         cv.put(Entries.ATOM_ID, entry.getAtomId());
 
         cv.put(Entries.ENTRY_HASH, entry.getHash());
+        cv.put(Entries.STORAGE_LOCATION, entry.getStorageLocation());
 
         cv.put(Entries.ALTERNATE_URL, entry.getAlternateHRef());
 

@@ -606,7 +606,7 @@ public class EntriesRetriever implements BackendProvider {
                 return fetchCtx.countFetchedEntries;
 
             if (getEntryManager().isNewsRobOnlySyncingEnabled()) {
-                job.setJobDescription("Fetching 'newsrob' articles.");
+                job.setJobDescription("Fetching 'GrazeRSS' articles.");
                 requestArticlesFromGoogleReader(job, fetchCtx, httpClient, NEWSROB_LABEL, entryManager
                         .getNewsRobSettings().getStorageCapacity(),
                         otUrlParameter

@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -510,18 +509,23 @@ public abstract class AbstractNewsRobListActivity extends ListActivity implement
 
         //
 
-        Uri uri = Uri.parse("http://bit.ly/nrfaq");
-        // Uri uri =
+        // Uri uri = Uri.parse("http://bit.ly/nrfaq");
+        // // Uri uri =
+        // //
         // Uri.parse("http://groups.google.com/group/newsrob/web/frequently-asked-questions");
-        menu.add(0, MENU_ITEM_FAQ_ID, 0, R.string.menu_faq).setIcon(android.R.drawable.ic_menu_help)
-                .setTitleCondensed("FAQ").setIntent(new Intent(Intent.ACTION_VIEW, uri));
+        // menu.add(0, MENU_ITEM_FAQ_ID, 0,
+        // R.string.menu_faq).setIcon(android.R.drawable.ic_menu_help)
+        // .setTitleCondensed("FAQ").setIntent(new Intent(Intent.ACTION_VIEW,
+        // uri));
 
-        if (entryManager.canNewsRobProBeBought()) {
-            final Intent viewIntent = new Intent(Intent.ACTION_VIEW);
-            viewIntent.setData(Uri.parse("market://details?id=" + EntryManager.PRO_PACKAGE_NAME));
-            menu.add(0, ArticleViewHelper.MENU_ITEM_BUY_NEWSROB_PRO, 30, "Buy NewsRob Pro!").setIntent(viewIntent)
-                    .setTitleCondensed("Buy").setIcon(R.drawable.gen_auto_app_icon);
-        }
+        // if (entryManager.canNewsRobProBeBought()) {
+        // final Intent viewIntent = new Intent(Intent.ACTION_VIEW);
+        // viewIntent.setData(Uri.parse("market://details?id=" +
+        // EntryManager.PRO_PACKAGE_NAME));
+        // menu.add(0, ArticleViewHelper.MENU_ITEM_BUY_NEWSROB_PRO, 30,
+        // "Buy NewsRob Pro!").setIntent(viewIntent)
+        // .setTitleCondensed("Buy").setIcon(R.drawable.gen_auto_app_icon);
+        // }
 
         return result;
     }

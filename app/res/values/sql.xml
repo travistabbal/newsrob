@@ -341,6 +341,7 @@ AS
   SELECT
      entries._id AS _id,
      ENTRY_HASH,
+     STORAGE_LOCATION,
      entries.ATOM_ID as ATOM_ID,
      ALTERNATE_URL,
      CONTENT,

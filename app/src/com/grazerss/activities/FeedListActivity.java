@@ -224,8 +224,9 @@ public class FeedListActivity extends AbstractNewsRobListActivity {
         }
 
         if (item.getItemId() == MENU_ITEM_REFRESH_CONTENT_ID) {
-            Toast.makeText(getApplicationContext(),
-                    "The article's content is being removed. NewsRob will try to re-download it during the next sync.",
+            Toast.makeText(
+                    getApplicationContext(),
+                    "The article's content is being removed. GrazeRSS will try to re-download it during the next sync.",
                     Toast.LENGTH_LONG).show();
 
             final List<Entry> entries = getEntryManager().findArticlesForFeedId(feedId);

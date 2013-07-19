@@ -12,7 +12,6 @@ import android.net.Uri;
 import android.view.View;
 import android.widget.RemoteViews;
 
-import com.grazerss.R;
 import com.grazerss.activities.ArticleListActivity;
 import com.grazerss.activities.LoginActivity;
 import com.grazerss.activities.UIHelper;
@@ -53,10 +52,10 @@ public class NewsRobNotificationManager implements IEntryModelUpdateListener {
         Intent i = new Intent(Intent.ACTION_VIEW, uri);
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        Notification n = new Notification(R.drawable.gen_auto_notification_icon, "NewsRob has been updated", new Date()
-                .getTime());
-        n.setLatestEventInfo(context, "NewsRob has been updated", "Tap to open release notes.", PendingIntent
-                .getActivity(context, 0, i, 0));
+        Notification n = new Notification(R.drawable.gen_auto_notification_icon, "GrazeRSS has been updated",
+                new Date().getTime());
+        n.setLatestEventInfo(context, "GrazeRSS has been updated", "Tap to open release notes.",
+                PendingIntent.getActivity(context, 0, i, 0));
         n.flags |= Notification.FLAG_AUTO_CANCEL;
 
         nm.notify(9292, n);
@@ -200,14 +199,14 @@ public class NewsRobNotificationManager implements IEntryModelUpdateListener {
     }
 
     public void sendSynchronizationProblemNotification(boolean loginExpired) {
-        nm.notify(NOTIFICATION_SYNCHRONIZATION_STOPPED_WITH_ERROR, createSynchronizationProblemNotification(null, null,
-                loginExpired));
+        nm.notify(NOTIFICATION_SYNCHRONIZATION_STOPPED_WITH_ERROR,
+                createSynchronizationProblemNotification(null, null, loginExpired));
     }
 
     /** LATER this method is not called at all? */
     public void sendSynchronizationProblemNotification(String captchaToken, String captchaUrl) {
-        nm.notify(NOTIFICATION_SYNCHRONIZATION_STOPPED_WITH_ERROR, createSynchronizationProblemNotification(
-                captchaToken, captchaUrl, false));
+        nm.notify(NOTIFICATION_SYNCHRONIZATION_STOPPED_WITH_ERROR,
+                createSynchronizationProblemNotification(captchaToken, captchaUrl, false));
     }
 
     @Override

@@ -17,7 +17,6 @@ import android.net.Uri;
 import android.os.Debug;
 import android.util.Log;
 
-import com.grazerss.R;
 import com.grazerss.activities.ShowMessageActivity;
 import com.grazerss.util.NewsRobStrictMode;
 import com.grazerss.util.SDKVersionUtil;
@@ -119,10 +118,10 @@ public class NewsRob extends Application {
 
         public void uncaughtException(final Thread t, final Throwable e) {
 
-            Log.e("NewsRob", "Caught the following exception: ", e);
+            Log.e("GrazeRSS", "Caught the following exception: ", e);
 
             final StringBuilder message = new StringBuilder(
-                    "Sorry!\n\nNewsRob hit a wall. Please send this mail, so that the developer can analyze/fix the issue.\nIf it is not too much to ask, please add to this mail what you just did between the following lines:\n\n-------\n\n\n-------\n");
+                    "Sorry!\n\nGrazeRSS hit a wall. Please send this mail, so that the developer can analyze/fix the issue.\nIf it is not too much to ask, please add to this mail what you just did between the following lines:\n\n-------\n\n\n-------\n");
 
             SettingsRenderer.renderSettings(EntryManager.getInstance(context), message);
 

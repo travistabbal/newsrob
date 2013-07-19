@@ -220,7 +220,7 @@ public class SynchronizationService extends Service {
                                             // getSystemService(Context.WIFI_SERVICE);
 
             if (false) {
-                WifiLock wiFiLock = wifiManager.createWifiLock("NewsRobSync");
+                WifiLock wiFiLock = wifiManager.createWifiLock("GrazeRSSSync");
                 wiFiLock.acquire();
             }
             PL.log(this, "doSync invoked. (1)", null, getApplicationContext());

@@ -259,12 +259,14 @@ class ArticleViewHelper {
 
         if ("1".equals(NewsRob.getDebugProperties(owningActivity).getProperty("enableBoom", "0")))
             menu.add(0, MENU_ITEM_BOOM_ID, 21, "Boom!");
-
-        if (entryManager.canNewsRobProBeBought()) {
-            final Intent viewIntent = new Intent(Intent.ACTION_VIEW);
-            viewIntent.setData(Uri.parse("market://details?id=" + EntryManager.PRO_PACKAGE_NAME));
-            menu.add(0, MENU_ITEM_BUY_NEWSROB_PRO, 31, "Buy NewsRob Pro!").setIntent(viewIntent);
-        }
+        //
+        // if (entryManager.canNewsRobProBeBought()) {
+        // final Intent viewIntent = new Intent(Intent.ACTION_VIEW);
+        // viewIntent.setData(Uri.parse("market://details?id=" +
+        // EntryManager.PRO_PACKAGE_NAME));
+        // menu.add(0, MENU_ITEM_BUY_NEWSROB_PRO, 31,
+        // "Buy NewsRob Pro!").setIntent(viewIntent);
+        // }
 
     }
 
@@ -305,7 +307,7 @@ class ArticleViewHelper {
         message.append("\n\n");
 
         message.append(selectedEntry.getContent());
-        message.append("\n\nSend via <b>NewsRob</b>\n</div></body></html>");
+        message.append("\n\nSend via <b>GrazeRSS</b>\n</div></body></html>");
 
         message = new StringBuilder(
                 "<html><body><p>Hello<img src=\'http://www.spiegel.de/static/sys/v9/spiegelonline_logo.png\'/> world.</body></html>");
@@ -384,8 +386,9 @@ class ArticleViewHelper {
                     ManageFeedActivity.EXTRA_FEED_ID, selectedEntry.getFeedId()));
             return true;
         case ArticleViewHelper.MENU_ITEM_REFRESH_CONTENT_ID:
-            Toast.makeText(owningActivity,
-                    "The article's content is being removed. NewsRob will try to re-download it during the next sync.",
+            Toast.makeText(
+                    owningActivity,
+                    "The article's content is being removed. GrazeRSS will try to re-download it during the next sync.",
                     Toast.LENGTH_LONG).show();
             new Thread(new Runnable() {
                 @Override

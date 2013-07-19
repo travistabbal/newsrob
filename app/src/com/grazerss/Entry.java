@@ -24,14 +24,7 @@ public class Entry {
     private String atomId;
     private long id = -1;
     private String hash;
-
-    public String getHash() {
-        return hash;
-    }
-
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
+    private String storageLocation;
 
     private String title;
 
@@ -407,5 +400,21 @@ public class Entry {
             return f;
         else
             return null;
+    }
+
+    public String getHash() {
+        return hash;
+    }
+
+    public void setHash(String hash) {
+        this.hash = hash;
+    }
+
+    public void setStorageLocation(String location) {
+        this.storageLocation = location;
+    }
+
+    public String getStorageLocation() {
+        return storageLocation;
     }
 }

@@ -60,8 +60,8 @@ import com.google.ads.AdSenseSpec;
 import com.google.ads.AdSenseSpec.AdType;
 import com.google.ads.AdSenseSpec.ExpandDirection;
 import com.grazerss.BackendProvider.AuthToken;
-import com.grazerss.BackendProvider.StateChange;
 import com.grazerss.BackendProvider.AuthToken.AuthType;
+import com.grazerss.BackendProvider.StateChange;
 import com.grazerss.DB.Entries;
 import com.grazerss.DB.EntryLabelAssociations;
 import com.grazerss.DB.TempTable;
@@ -2223,7 +2223,7 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             ctx.startActivity(i);
         } else {
-            getNewsRobNotificationManager().createCheckReleaseNotesNotification(uri);
+            // getNewsRobNotificationManager().createCheckReleaseNotesNotification(uri);
 
         }
 
