@@ -195,7 +195,7 @@
         </activity>
 
         <activity
-            android:name="com.grazerss.appwidget.UnreadWidgetPrefActivitytPrefActivity"
+            android:name="com.grazerss.appwidget.UnreadWidgetPrefActivity"
             android:label="Configure Unread Widget"
             android:configChanges="orientation|keyboardHidden|keyboard"
             android:theme="@android:style/Theme.Dialog">
