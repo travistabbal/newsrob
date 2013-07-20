@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.grazerss"
     android:versionCode="100"
-    android:versionName="1.0.0-Beta1">
+    android:versionName="1.0.0-Beta2">
 
     <supports-screens
         android:smallScreens="true"
@@ -177,7 +177,7 @@
 
         <activity
             android:name="com.grazerss.activities.SubscribeFeedActivity"
-            android:label="Subscribe to Feed in Google Reader"
+            android:label="Subscribe to Feed"
             android:configChanges="orientation|keyboardHidden|keyboard"
             android:exported="true">
             <intent-filter>

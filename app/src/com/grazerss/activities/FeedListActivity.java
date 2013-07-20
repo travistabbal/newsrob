@@ -288,7 +288,7 @@ public class FeedListActivity extends AbstractNewsRobListActivity {
 
         menu.add(0, MENU_ITEM_UNSUBSCRIBE_FEED_ID, 10, "Unsubscribe Feed").setEnabled(feedCanBeUnsubscribed);
 
-        menu.add(0, MENU_ITEM_REFRESH_CONTENT_ID, 10, "Refresh Content For All Articles");
+        menu.add(0, MENU_ITEM_REFRESH_CONTENT_ID, 10, "Refresh All Content");
     }
 
     public void modelUpdated(String atomId) {
