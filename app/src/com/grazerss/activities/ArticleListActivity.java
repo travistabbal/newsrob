@@ -528,8 +528,8 @@ public class ArticleListActivity extends AbstractNewsRobListActivity implements 
 
                     // image
                     holder.thumbnailImageView.setVisibility(View.GONE);
-                    String hash = cursor.getString(columnIndices.hashIndex);
-                    File f = Entry.getThumbnailFile(entryManager, Entry.getShortAtomId(hash));
+                    String id = cursor.getString(columnIndices.atomIdIndex);
+                    File f = Entry.getThumbnailFile(entryManager, Entry.getShortAtomId(id));
                     if (f == null)
                         holder.thumbnailImageView.setImageURI(null);
                     else {

@@ -386,7 +386,7 @@ public class Entry {
     }
 
     public final File getAssetsDir(EntryManager em) {
-        return new File(em.getStorageAdapter().getAbsolutePathForAsset("a" + this.getShortAtomId()));
+        return new File(em.getStorageAdapter().getAbsolutePathForAsset(this.getShortAtomId()));
     }
 
     public static final File getAssetsDir(EntryManager em, String shortAtomId) {
