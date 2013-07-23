@@ -13,15 +13,15 @@ import java.util.regex.Pattern;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.Bitmap.CompressFormat;
-import android.graphics.Bitmap.Config;
-import android.graphics.PorterDuff.Mode;
 
 import com.grazerss.PL;
 
@@ -102,7 +102,11 @@ public class PreviewGenerator {
     }
 
     protected List<File> findAllImageFiles() {
-        return Arrays.asList(assetsDir.listFiles(filter));
+        File[] files = assetsDir.listFiles(filter);
+        if (files != null)
+            return Arrays.asList(files);
+        else
+            return new ArrayList<File>();
     }
 
     protected File findBiggestImageFile() {
@@ -231,9 +235,8 @@ public class PreviewGenerator {
             return false;
         } catch (OutOfMemoryError ooe) {
             ooe.printStackTrace();
-            PL.log(
-                    "PreviewGenerator: Bitmap was too big (OOM) in generatingPreview. Skipping it. "
-                            + getMemoryStatus(), context);
+            PL.log("PreviewGenerator: Bitmap was too big (OOM) in generatingPreview. Skipping it. " + getMemoryStatus(),
+                    context);
             if (outputFile != null)
                 PL.log("Deleting output file: " + outputFile.delete(), context);
 
