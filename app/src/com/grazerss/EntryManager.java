@@ -847,30 +847,32 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
     }
 
     // the business logic to diff the two states and derive the flags
-    public void updateReadState(Entry entry, ReadState newReadState) {
+    public void updateReadState(Entry entryParam, ReadState newReadState) {
+        for (Entry entry : databaseHelper.findEntriesByAtomId(entryParam.getAtomId())) {
+            ReadState existingReadState = entry.getReadState();
 
-        ReadState existingReadState = entry.getReadState();
+            // GR state unread on both sides or read on both sides?
+            boolean existingUnread = existingReadState == ReadState.UNREAD || existingReadState == ReadState.PINNED;
+            boolean newUnread = newReadState == ReadState.UNREAD || newReadState == ReadState.PINNED;
 
-        // GR state unread on both sides or read on both sides?
-        boolean existingUnread = existingReadState == ReadState.UNREAD || existingReadState == ReadState.PINNED;
-        boolean newUnread = newReadState == ReadState.UNREAD || newReadState == ReadState.PINNED;
+            boolean stateChanged = existingUnread != newUnread;
 
-        boolean stateChanged = existingUnread != newUnread;
+            boolean existingReadStatePending = entry.isReadStatePending();
+            boolean newReadStatePending = stateChanged ? !existingReadStatePending : existingReadStatePending;
 
-        boolean existingReadStatePending = entry.isReadStatePending();
-        boolean newReadStatePending = stateChanged ? !existingReadStatePending : existingReadStatePending;
+            // pinned state changed?
+            boolean existingPinned = existingReadState == ReadState.PINNED;
+            boolean newPinned = newReadState == ReadState.PINNED;
+            boolean pinnedStateChanged = existingPinned != newPinned;
 
-        // pinned state changed?
-        boolean existingPinned = existingReadState == ReadState.PINNED;
-        boolean newPinned = newReadState == ReadState.PINNED;
-        boolean pinnedStateChanged = existingPinned != newPinned;
+            // flip flopping the pinned state pending flag if a change in pinned
+            // state has occured
+            boolean existingPinnedStatePending = entry.isPinnedStatePending();
+            boolean newPinnedStatePending = pinnedStateChanged ? !existingPinnedStatePending
+                    : existingPinnedStatePending;
 
-        // flip flopping the pinned state pending flag if a change in pinned
-        // state has occured
-        boolean existingPinnedStatePending = entry.isPinnedStatePending();
-        boolean newPinnedStatePending = pinnedStateChanged ? !existingPinnedStatePending : existingPinnedStatePending;
-
-        updateReadState(entry, newReadState, newReadStatePending, newPinnedStatePending);
+            updateReadState(entry, newReadState, newReadStatePending, newPinnedStatePending);
+        }
     }
 
     void updateStarredState(final Entry entry, final boolean isStarred, final boolean isStarredStatePending) {

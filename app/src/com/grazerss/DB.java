@@ -614,6 +614,23 @@ public class DB extends SQLiteOpenHelper {
         return entry;
     }
 
+    List<Entry> findEntriesByAtomId(String entryAtomId) {
+        List<Entry> entries = new ArrayList<Entry>();
+
+        Cursor c = getReadOnlyDb().rawQuery("SELECT * FROM " + ENTRIES_VIEW + " where ATOM_ID=?",
+                new String[] { entryAtomId });
+
+        while (c.moveToNext()) {
+            Entry entry = createEntryFromCursor(c);
+
+            if (entry != null)
+                entries.add(entry);
+        }
+
+        c.close();
+        return entries;
+    }
+
     Entry findEntryByHash(String hash) {
         Cursor c = getReadOnlyDb().rawQuery("SELECT * FROM " + ENTRIES_VIEW + " where ENTRY_HASH=?",
                 new String[] { hash });
