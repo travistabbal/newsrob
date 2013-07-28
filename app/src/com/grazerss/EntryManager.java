@@ -848,7 +848,10 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
 
     // the business logic to diff the two states and derive the flags
     public void updateReadState(Entry entryParam, ReadState newReadState) {
-        for (Entry entry : databaseHelper.findEntriesByAtomId(entryParam.getAtomId())) {
+        List<Entry> entries = databaseHelper.findEntriesByAtomId(entryParam.getAtomId());
+        entries.add(entryParam); // Make sure the UI gets updated as well
+
+        for (Entry entry : entries) {
             ReadState existingReadState = entry.getReadState();
 
             // GR state unread on both sides or read on both sides?
