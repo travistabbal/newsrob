@@ -225,9 +225,9 @@ public class NewsBlurBackendProvider implements BackendProvider {
         job.target = hashesToFetch.size();
         job.setJobDescription("Fetching Unread Articles");
 
-        // Download and parse/store up to 100 articles at a time
+        // Download and parse/store up to 5 articles at a time
         while (offset < hashesToFetch.size()) {
-            int nextPackSize = Math.min(hashesToFetch.size() - offset, 100);
+            int nextPackSize = Math.min(hashesToFetch.size() - offset, 5);
             if (nextPackSize == 0)
                 break;
 
