@@ -2,8 +2,8 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.grazerss"
-    android:versionCode="1007"
-    android:versionName="1.0.0-Beta7">
+    android:versionCode="100"
+    android:versionName="1.0.0">
 
     <supports-screens
         android:smallScreens="true"
