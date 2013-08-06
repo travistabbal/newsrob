@@ -16,6 +16,7 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.grazerss.PL;
 import com.newsblur.domain.ValueMultimap;
 import com.newsblur.util.NetworkUtils;
 
@@ -119,9 +120,18 @@ public class APIClient {
                 connection.setRequestProperty("Cookie", cookie);
             }
 
-            final PrintWriter printWriter = new PrintWriter(connection.getOutputStream());
-            printWriter.print(parameterString);
-            printWriter.close();
+            try {
+                final PrintWriter printWriter = new PrintWriter(connection.getOutputStream());
+                printWriter.print(parameterString);
+                printWriter.close();
+            } catch (IOException e) {
+                Log.e(this.getClass().getName(), "Error opening POST connection to " + urlString + ": " + e.getCause(),
+                        e.getCause());
+                e.printStackTrace();
+                String message = "Error opening POST connection to " + urlString + ": " + e.getCause();
+                PL.log(message, context);
+                return new APIResponse();
+            }
 
             return extractResponse(url, connection);
         } catch (IOException e) {
