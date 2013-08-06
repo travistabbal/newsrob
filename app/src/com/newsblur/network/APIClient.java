@@ -120,24 +120,16 @@ public class APIClient {
                 connection.setRequestProperty("Cookie", cookie);
             }
 
-            try {
-                final PrintWriter printWriter = new PrintWriter(connection.getOutputStream());
-                printWriter.print(parameterString);
-                printWriter.close();
-            } catch (IOException e) {
-                Log.e(this.getClass().getName(), "Error opening POST connection to " + urlString + ": " + e.getCause(),
-                        e.getCause());
-                e.printStackTrace();
-                String message = "Error opening POST connection to " + urlString + ": " + e.getCause();
-                PL.log(message, context);
-                return new APIResponse();
-            }
-
+            final PrintWriter printWriter = new PrintWriter(connection.getOutputStream());
+            printWriter.print(parameterString);
+            printWriter.close();
             return extractResponse(url, connection);
         } catch (IOException e) {
             Log.e(this.getClass().getName(), "Error opening POST connection to " + urlString + ": " + e.getCause(),
                     e.getCause());
             e.printStackTrace();
+            String message = "Error opening POST connection to " + urlString + ": " + e.getCause();
+            PL.log(message, context);
             return new APIResponse();
         } finally {
             if (connection != null) {
