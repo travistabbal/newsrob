@@ -797,13 +797,14 @@ class WebPageDownloadTask implements Callable<Void> {
 
             Timing tInner = new Timing("Downloading page " + pageUrl, ctx);
             final String downloadHost = new URL(entry.getAlternateHRef()).getHost().toString();
+            final String downloadHostWithMobilizer = new URL(entry.getBaseUrl(entryManager)).getHost().toString();
 
             boolean downloadingFromInstapaper = false;
             try {
 
                 // Single download only / Instapaper
 
-                if (downloadHost.contains("instapaper")) {
+                if (downloadHostWithMobilizer.contains("instapaper")) {
 
                     instapaperLock.lock();
                     downloadingFromInstapaper = true;
