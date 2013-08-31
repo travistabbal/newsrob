@@ -97,7 +97,7 @@ import com.grazerss.util.Timing;
  * 
  */
 public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeListener, OnPreferenceChangeListener {
-    public static final String SETTINGS_SYNC_NEWSROB_ONLY_ENABLED = "settings_sync_newsrob_only_enabled";
+    public static final String SETTINGS_SYNC_NEWSROB_ONLY_ENABLED = "settings_sync_grazerss_only_enabled";
 
     private static final String DEVICE_MODEL_DESIRE = "HTC Desire";
     private static final String DEVICE_MODEL_EVO = "PC36100";
