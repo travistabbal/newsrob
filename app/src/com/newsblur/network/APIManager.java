@@ -3,6 +3,7 @@ package com.newsblur.network;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.http.HttpStatus;
 
@@ -302,11 +303,16 @@ public class APIManager {
         }
     }
 
-    public UnreadHashResponse getUnreadStoryHashes() {
+    public UnreadHashResponse getUnreadStoryHashes(List<String> feedIds) {
         final APIClient client = new APIClient(context, cookie);
         final ValueMultimap values = new ValueMultimap();
 
         values.put("include_timestamps", "true");
+        if (feedIds != null) {
+            for (String feedId : feedIds) {
+                values.put("feed_id", feedId);
+            }
+        }
 
         final APIResponse response = client.get(APIConstants.URL_UNREAD_STORY_HASHES, values);
 
