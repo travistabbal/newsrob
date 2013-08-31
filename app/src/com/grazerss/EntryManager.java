@@ -2167,7 +2167,7 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
         return getSharedPreferences().getBoolean(SETTING_SWIPE_ARTICLE_LIST, true);
     }
 
-    public boolean isNewsRobOnlySyncingEnabled() {
+    public boolean isGrazeRssOnlySyncingEnabled() {
         return getSharedPreferences().getBoolean(SETTINGS_SYNC_NEWSROB_ONLY_ENABLED, false);
     }
 

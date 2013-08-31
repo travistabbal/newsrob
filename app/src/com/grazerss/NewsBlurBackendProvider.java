@@ -36,6 +36,8 @@ import com.newsblur.network.domain.StoriesResponse;
 import com.newsblur.network.domain.UnreadHashResponse;
 
 public class NewsBlurBackendProvider implements BackendProvider {
+    private static final String GRAZERSS_LABEL = "grazerss";
+
     private APIManager apiManager = null;
     private Context context;
     private EntryManager entryManager = null;
@@ -126,7 +128,7 @@ public class NewsBlurBackendProvider implements BackendProvider {
     private void syncServerReadStates(EntryManager entryManager, SyncJob job) {
         try {
             job.setJobDescription("Syncing server read states");
-            UnreadHashResponse hashes = apiManager.getUnreadStoryHashes();
+            UnreadHashResponse hashes = apiManager.getUnreadStoryHashes(null);
 
             entryManager.populateTempTableHashes(TempTable.READ_HASHES, hashes.flatHashList);
             entryManager.updateStatesFromTempTableHash(TempTable.READ_HASHES, ArticleDbState.READ);
@@ -156,29 +158,42 @@ public class NewsBlurBackendProvider implements BackendProvider {
             FeedFolderResponse feedResponse = apiManager.getFolderFeedMapping(false);
 
             for (com.newsblur.domain.Feed nbFeed : feedResponse.feeds.values()) {
-                feedIds.add(nbFeed.feedId);
-
-                boolean found = false;
-
-                for (Feed nrFeed : feeds) {
-                    if (nrFeed != null && nrFeed.getAtomId().equals(nbFeed.feedId)) {
-                        found = true;
-                        break;
+                boolean add = false;
+                if (entryManager.isGrazeRssOnlySyncingEnabled()) {
+                    for (String foldername : getFolderNamesForFeed(feedResponse, nbFeed.feedId)) {
+                        if (foldername.contains(GRAZERSS_LABEL)) {
+                            add = true;
+                            break;
+                        }
                     }
+                } else {
+                    add = true;
                 }
+                if (add) {
+                    feedIds.add(nbFeed.feedId);
 
-                if (found == false) {
-                    Feed newFeed = new Feed();
-                    newFeed.setAtomId(nbFeed.feedId);
-                    newFeed.setTitle(nbFeed.title);
-                    newFeed.setUrl(nbFeed.address);
-                    newFeed.setDownloadPref(Feed.DOWNLOAD_PREF_DEFAULT);
-                    newFeed.setDisplayPref(Feed.DISPLAY_PREF_DEFAULT);
+                    boolean found = false;
 
-                    long id = entryManager.insert(newFeed);
-                    newFeed.setId(id);
+                    for (Feed nrFeed : feeds) {
+                        if (nrFeed != null && nrFeed.getAtomId().equals(nbFeed.feedId)) {
+                            found = true;
+                            break;
+                        }
+                    }
 
-                    feeds.add(newFeed);
+                    if (found == false) {
+                        Feed newFeed = new Feed();
+                        newFeed.setAtomId(nbFeed.feedId);
+                        newFeed.setTitle(nbFeed.title);
+                        newFeed.setUrl(nbFeed.address);
+                        newFeed.setDownloadPref(Feed.DOWNLOAD_PREF_DEFAULT);
+                        newFeed.setDisplayPref(Feed.DISPLAY_PREF_DEFAULT);
+
+                        long id = entryManager.insert(newFeed);
+                        newFeed.setId(id);
+
+                        feeds.add(newFeed);
+                    }
                 }
             }
 
@@ -216,7 +231,7 @@ public class NewsBlurBackendProvider implements BackendProvider {
 
         // Store the unread hashes in the temp table, remove the ones we have,
         // then get a new list
-        UnreadHashResponse hashes = apiManager.getUnreadStoryHashes();
+        UnreadHashResponse hashes = apiManager.getUnreadStoryHashes(feedIds);
         Map<String, Long> unreadHashes = hashes.flatHashList;
         entryManager.populateTempTableHashes(TempTable.READ_HASHES, unreadHashes);
         entryManager.removeLocallyExistingHashesFromTempTable();

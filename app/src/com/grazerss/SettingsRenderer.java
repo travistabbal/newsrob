@@ -95,7 +95,7 @@ public class SettingsRenderer {
         sb.append("-- Sync Auto enabled: " + entryManager.isAutoSyncEnabled() + "\n");
         sb.append("--      Unread Only: " + entryManager.shouldOnlyUnreadArticlesBeDownloaded() + "\n");
         sb.append("--      Delete Read: " + entryManager.shouldReadItemsBeDeleted() + "\n");
-        sb.append("--      NewsRob only: " + entryManager.isNewsRobOnlySyncingEnabled() + "\n");
+        sb.append("--      NewsRob only: " + entryManager.isGrazeRssOnlySyncingEnabled() + "\n");
         sb.append("--      Offline use: "
                 + entryManager.getSharedPreferences().getString(EntryManager.SETTINGS_STORAGE_ASSET_DOWNLOAD, "unset")
                 + "\n");
