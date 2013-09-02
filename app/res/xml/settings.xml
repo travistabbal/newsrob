@@ -29,11 +29,11 @@
             android:key="settings_always_exact_sync"
             android:summary="Unselect if you only use GrazeRSS on one device, but not the webapp or other apps."
             android:title="Always Use Exact Syncing" />
-<!--         <CheckBoxPreference -->
-<!--             android:defaultValue="false" -->
-<!--             android:key="settings_sync_newsrob_only_enabled" -->
-<!--             android:summary="Sync only articles that in a folder/tag called \&apos;newsrob\&apos;." -->
-<!--             android:title="Sync \&apos;newsrob\&apos; Only" /> -->
+         <CheckBoxPreference
+             android:defaultValue="false"
+             android:key="settings_sync_grazerss_only_enabled"
+             android:summary="Sync only articles that in a folder/tag called \&apos;grazerss\&apos;."
+             android:title="Sync \&apos;grazerss\&apos; Only" />
 
         <PreferenceCategory android:title="@string/settings_offline" >
             <com.grazerss.preference.ListPreference

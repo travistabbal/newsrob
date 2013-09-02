@@ -605,7 +605,7 @@ public class EntriesRetriever implements BackendProvider {
             if (!entryManager.syncCurrentlyEnabled(manualSync))
                 return fetchCtx.countFetchedEntries;
 
-            if (getEntryManager().isNewsRobOnlySyncingEnabled()) {
+            if (getEntryManager().isGrazeRssOnlySyncingEnabled()) {
                 job.setJobDescription("Fetching 'GrazeRSS' articles.");
                 requestArticlesFromGoogleReader(job, fetchCtx, httpClient, NEWSROB_LABEL, entryManager
                         .getNewsRobSettings().getStorageCapacity(),
@@ -953,7 +953,7 @@ public class EntriesRetriever implements BackendProvider {
         job.setJobDescription("Fetching more unread articles - preparation");
 
         long[] article_ids = null;
-        if (getEntryManager().isNewsRobOnlySyncingEnabled())
+        if (getEntryManager().isGrazeRssOnlySyncingEnabled())
             article_ids = fetchStreamIds(entryManager, NEWSROB_LABEL, GOOGLE_STATE_READ);
         else
             article_ids = fetchStreamIds(entryManager, GOOGLE_STATE_READING_LIST, GOOGLE_STATE_READ);
