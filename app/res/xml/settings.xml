@@ -3,6 +3,13 @@
 
     <PreferenceScreen android:title="@string/settings_automatic_refreshing_category_title" >
         <com.grazerss.preference.ListPreference
+            android:defaultValue="com.grazerss.NewsBlurBackendProvider"
+            android:entries="@array/service_provider_labels"
+            android:entryValues="@array/service_provider_values"
+            android:key="settings_service_provider"
+            android:summary="@string/settings_service_provider_summary"
+            android:title="@string/settings_service_provider_title" />
+        <com.grazerss.preference.ListPreference
             android:defaultValue="unread_articles_only"
             android:entries="@array/sync_type_labels"
             android:entryValues="@array/sync_type_values"
@@ -72,7 +79,7 @@
 
         <PreferenceCategory android:title="@string/settings_capacities" >
             <com.grazerss.preference.ListPreference
-                android:defaultValue="50"
+                android:defaultValue="100"
                 android:entries="@array/storage_capacity_labels"
                 android:entryValues="@array/storage_capacity_values"
                 android:key="settings_entry_manager_entries_capacity"

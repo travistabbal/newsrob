@@ -36,8 +36,6 @@ import com.newsblur.network.domain.StoriesResponse;
 import com.newsblur.network.domain.UnreadHashResponse;
 
 public class NewsBlurBackendProvider implements BackendProvider {
-    private static final String GRAZERSS_LABEL = "grazerss";
-
     private APIManager apiManager = null;
     private Context context;
     private EntryManager entryManager = null;

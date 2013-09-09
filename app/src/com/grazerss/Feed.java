@@ -66,7 +66,7 @@ public class Feed {
         return id;
     }
 
-    void setId(long id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -74,7 +74,7 @@ public class Feed {
         return title;
     }
 
-    void setTitle(String title) {
+    public void setTitle(String title) {
         this.title = title;
     }
 
@@ -145,8 +145,8 @@ public class Feed {
         List<Feed> feeds = EntryManager.getInstance(context).findAllFeeds();
         PrintWriter pw = null;
         try {
-            pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new BufferedOutputStream(storageAdapter
-                    .openFileOutput(FEED_SETTINGS_FILE_NAME), 8192))));
+            pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new BufferedOutputStream(
+                    storageAdapter.openFileOutput(FEED_SETTINGS_FILE_NAME), 8192))));
 
             pw.println("<feeds version='1'>");
             for (Feed feed : feeds) {

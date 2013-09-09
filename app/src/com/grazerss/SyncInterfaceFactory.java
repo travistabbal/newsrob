@@ -3,13 +3,17 @@ package com.grazerss;
 import java.lang.reflect.Constructor;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class SyncInterfaceFactory {
     private static final String TAG = SyncInterfaceFactory.class.getName();
+    private static final String SETTINGS_SERVICE_PROVIDER = "settings_service_provider";
 
     public static BackendProvider getSyncInterface(Context context) {
-        String className = NewsRob.getDebugProperties(context).getProperty("syncClassName",
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String className = sharedPreferences.getString(SETTINGS_SERVICE_PROVIDER,
                 "com.grazerss.NewsBlurBackendProvider");
 
         Log.d(TAG, "Attempting to load sync class: " + className);

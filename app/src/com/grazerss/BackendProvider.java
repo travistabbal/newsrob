@@ -17,6 +17,7 @@ import com.grazerss.jobs.Job;
 
 public interface BackendProvider {
     final static long ONE_DAY_IN_MS = 1000 * 60 * 60 * 24;
+    public static final String GRAZERSS_LABEL = "grazerss";
 
     class AuthenticationExpiredException extends Exception {
     }
@@ -102,7 +103,7 @@ public interface BackendProvider {
             return getType();
         }
 
-        String getAuthToken() {
+        public String getAuthToken() {
             return authToken;
         }
 
