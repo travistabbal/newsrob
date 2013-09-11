@@ -229,8 +229,22 @@ public class NewsBlurBackendProvider implements BackendProvider {
 
         // Store the unread hashes in the temp table, remove the ones we have,
         // then get a new list
-        UnreadHashResponse hashes = apiManager.getUnreadStoryHashes(feedIds);
-        Map<String, Long> unreadHashes = hashes.flatHashList;
+
+        Map<String, Long> unreadHashes = new HashMap<String, Long>();
+
+        // Download and parse/store up to 25 feeds at a time
+        while (offset < feedIds.size()) {
+            int nextPackSize = Math.min(feedIds.size() - offset, 25);
+            if (nextPackSize == 0)
+                break;
+
+            List<String> currentPack = new ArrayList<String>(feedIds.subList(offset, offset + nextPackSize));
+            offset += nextPackSize;
+
+            UnreadHashResponse hashes = apiManager.getUnreadStoryHashes(currentPack);
+            unreadHashes.putAll(hashes.flatHashList);
+        }
+
         entryManager.populateTempTableHashes(TempTable.READ_HASHES, unreadHashes);
         entryManager.removeLocallyExistingHashesFromTempTable();
         List<String> hashesToFetch = entryManager.getNewHashesToFetch(maxCapacity - currentUnreadArticlesCount);
@@ -239,6 +253,7 @@ public class NewsBlurBackendProvider implements BackendProvider {
         job.setJobDescription("Fetching Unread Articles");
 
         // Download and parse/store up to 5 articles at a time
+        offset = 0;
         while (offset < hashesToFetch.size()) {
             int nextPackSize = Math.min(hashesToFetch.size() - offset, 5);
             if (nextPackSize == 0)
@@ -302,7 +317,22 @@ public class NewsBlurBackendProvider implements BackendProvider {
             newEntry.setUpdated(story.date == null ? new Date().getTime() : story.date.getTime());
 
             // Fill in some data from the feed record....
-            Feed nrFeed = getFeedFromAtomId(feeds, story.feedId);
+            Feed nrFeed = null;
+
+            if (story.feedId == null) {
+                nrFeed = getFeedFromAtomId(feeds, "Unknown");
+                if (nrFeed == null) {
+                    nrFeed = new Feed();
+                    nrFeed.setAtomId("Unknown");
+                    nrFeed.setTitle("Unknown");
+                    nrFeed.setDisplayPref(Feed.DISPLAY_PREF_DEFAULT);
+                    nrFeed.setDownloadPref(Feed.DOWNLOAD_PREF_DEFAULT);
+                    nrFeed.setId(entryManager.insert(nrFeed));
+                    feeds.add(nrFeed);
+                }
+            } else {
+                nrFeed = getFeedFromAtomId(feeds, story.feedId);
+            }
 
             if (nrFeed != null) {
                 newEntry.setFeedId(nrFeed.getId());
