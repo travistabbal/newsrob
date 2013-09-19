@@ -18,8 +18,8 @@
 	
 	
 	<string name="dashboard_label">GrazeRSS</string>
-	<string name="feed_list_label">NR Feeds</string>
-	<string name="article_list_label">NR Articles</string>
+	<string name="feed_list_label">Feeds</string>
+	<string name="article_list_label">Articles</string>
    
     <string name="search_label">SEARCH_LABEL</string>
     <string name="search_settings_description">Articles</string>
