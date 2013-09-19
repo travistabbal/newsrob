@@ -61,12 +61,12 @@ public class OldReaderManager
 
     if (newestFirst)
     {
-      direction = "o";
-      nt = lastUpdate.toString();
+      ot = lastUpdate.toString();
     }
     else
     {
-      ot = lastUpdate.toString();
+      direction = "o";
+      nt = lastUpdate.toString();
     }
 
     if (folderName == null)
