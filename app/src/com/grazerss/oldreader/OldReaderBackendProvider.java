@@ -116,7 +116,7 @@ public class OldReaderBackendProvider implements BackendProvider
       newEntry.setAlternateHRef(getLink(story.alternate));
       newEntry.setHash(null);
       newEntry.setStarred(false);
-      newEntry.setUpdated(story.published == null ? new Date().getTime() : story.published);
+      newEntry.setUpdated(story.crawlTimeMsec == null ? new Date().getTime() : story.crawlTimeMsec);
       setLastUpdate(story.crawlTimeMsec);
 
       // Fill in some data from the feed record....
