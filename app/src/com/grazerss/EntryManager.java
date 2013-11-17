@@ -156,6 +156,8 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
 
   private static final String SETTINGS_GOOGLE_USER_ID                              = "settings_google_user_id";
   private static final String SETTINGS_GR_UPDATED_KEY                              = "com.grazerss.gr_updated";
+  private static final String SETTINGS_LAST_READ_SYNC_KEY                          = "settings_last_read_sync";
+  private static final String SETTINGS_LAST_STAR_SYNC_KEY                          = "settings_last_star_sync";
   static final String         SETTINGS_HIDE_READ_ITEMS                             = "settings_hide_read_items";
   static final String         SETTINGS_HOVERING_BUTTONS_NAVIGATION_ENABLED         = "settings_hovering_buttons_navigation_enabled";
 
@@ -309,7 +311,7 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
 
   protected Job                                       currentRunningJob;
 
-  private int                                         currentThemeId          = 0;
+  private int                                         currentThemeId            = 0;
 
   private final DB                                    databaseHelper;
 
@@ -321,11 +323,11 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
   private Boolean                                     isGoogleTv;
 
   private Map<DBQuery, Boolean>                       isMarkAllReadPossibleCache;
-  private boolean                                     isModelCurrentlyUpdated = false;
+  private boolean                                     isModelCurrentlyUpdated   = false;
 
   private Long                                        lastUpdateWidgetUpdate;
 
-  private final Collection<IEntryModelUpdateListener> listeners               = new ArrayList<IEntryModelUpdateListener>(1);
+  private final Collection<IEntryModelUpdateListener> listeners                 = new ArrayList<IEntryModelUpdateListener>(1);
 
   long                                                modelLockedAt;
 
@@ -348,6 +350,8 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
   private Timer                                       updateWidgetsTimer;
 
   private TimerTask                                   updateWidgetsTimerTask;
+
+  public static final String                          SETTINGS_SERVICE_PROVIDER = "settings_service_provider";
 
   private EntryManager(final Context context)
   {
@@ -699,6 +703,8 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
     fireStatusUpdated();
     setGRUpdated(-1l);
     updateLastSyncedSubscriptions(-1l);
+    setLastReadSync(-1);
+    setLastStarredSync(-1);
     databaseHelper.deleteAll();
     final int noOfAssetsDeleted = WebPageDownloadDirector.removeAllAssets(fileContextAdapter, ctx);
     Log.d(TAG, noOfAssetsDeleted + " assets deleted.");
@@ -900,6 +906,11 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
     return result;
   }
 
+  public Feed findFeedByAtomId(String atomId)
+  {
+    return databaseHelper.findFeedByAtomId(atomId);
+  }
+
   public Feed findFeedById(final long feedId)
   {
     return databaseHelper.findFeedById(feedId);
@@ -1083,9 +1094,9 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
     String authToken = getSharedPreferences().getString(SETTINGS_AUTH_TOKEN, null);
     String authType = getSharedPreferences().getString(SETTINGS_AUTH_TYPE, null);
 
-    PL.log("EM.getAuthToken() token=" + authToken.substring(0, 4) + " type=" + authType, ctx);
     if ((authToken != null) && (authType != null))
     {
+      PL.log("EM.getAuthToken() token=" + authToken.substring(0, 4) + " type=" + authType, ctx);
       AuthToken token = new EntriesRetriever.AuthToken(BackendProvider.AuthToken.AuthType.valueOf(authType), authToken);
       PL.log("EM.getAuthToken()2 ton=" + token, ctx);
       if ("EXPIRED".equals(token.getAuthToken()))
@@ -1230,9 +1241,19 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
     return singleValueStore.getLong("last_exact_sync", 0l);
   }
 
+  public long getLastReadSync()
+  {
+    return getSharedPreferences().getLong(SETTINGS_LAST_READ_SYNC_KEY, getGRUpdated());
+  }
+
   public long getLastShownThatSyncIsNotPossible()
   {
     return singleValueStore.getLong("sync_not_possible_shown", 0l);
+  }
+
+  public long getLastStarredSync()
+  {
+    return getSharedPreferences().getLong(SETTINGS_LAST_STAR_SYNC_KEY, -1);
   }
 
   public Date getLastSuccessfulLogin()
@@ -1879,8 +1900,11 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
       pm.setComponentEnabledSetting(cName, newComponentState, PackageManager.DONT_KILL_APP);
     }
     PL.log("EntryManager.maintainBootReceiverState(): Component enabled=" + pm.getComponentEnabledSetting(cName), ctx);
-    scheduler.ensureSchedulingIsEnabled();
 
+    if (isAutoSyncEnabled())
+    {
+      scheduler.ensureSchedulingIsEnabled();
+    }
   }
 
   public void maintainFirstInstalledVersion()
@@ -1954,9 +1978,14 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
 
   public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key)
   {
+    if (SETTINGS_SERVICE_PROVIDER.equals(key))
+    {
+      requestClearCache(null);
+      logout();
+    }
 
     if (SETTINGS_ENTRY_MANAGER_CAPACITY.equals(key) || SETTINGS_KEEP_SHARED.equals(key) || SETTINGS_KEEP_STARRED.equals(key)
-        || SETTINGS_SYNC_TYPE.equals(key))
+        || SETTINGS_SYNC_TYPE.equals(key) || SETTINGS_UI_SORT_DEFAULT_NEWEST_FIRST.equals(key))
     {
       setGRUpdated(-1l);
     }
@@ -1993,6 +2022,11 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
       getContext().setTheme(getCurrentThemeResourceId());
     }
     currentThemeId = 0; // reset in case this has been changed
+  }
+
+  public void populateTempTable(TempTable tempTableType, List<String> articleIds)
+  {
+    databaseHelper.populateTempIds(tempTableType, articleIds);
   }
 
   public void populateTempTable(TempTable tempTableType, final long[] articleIds)
@@ -2405,6 +2439,26 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
     SDK9Helper.apply(getSharedPreferences().edit().putLong(SETTINGS_GR_UPDATED_KEY, lastUpdated));
   }
 
+  public void setLastReadSync(final long lastUpdated)
+  {
+    if (NewsRob.isDebuggingEnabled(ctx))
+    {
+      PL.log("setLastReadSync=" + lastUpdated, ctx);
+    }
+
+    SDK9Helper.apply(getSharedPreferences().edit().putLong(SETTINGS_LAST_READ_SYNC_KEY, lastUpdated));
+  }
+
+  public void setLastStarredSync(final long lastUpdated)
+  {
+    if (NewsRob.isDebuggingEnabled(ctx))
+    {
+      PL.log("setLastStarredSync=" + lastUpdated, ctx);
+    }
+
+    SDK9Helper.apply(getSharedPreferences().edit().putLong(SETTINGS_LAST_STAR_SYNC_KEY, lastUpdated));
+  }
+
   void setLastSync(final boolean complete)
   {
     SDK9Helper.apply(getSharedPreferences().edit().putBoolean(SETTINGS_LAST_SYNC_COMPLETE, complete)
@@ -2474,7 +2528,6 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
 
   public boolean shouldAdsBeShown()
   {
-
     final boolean shouldAdsBeShown = !isProVersion() || "1".equals(NewsRob.getDebugProperties(ctx).getProperty("enableAds", "0"));
     if (false)
     {
@@ -2942,11 +2995,11 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
     entry.setStarredStatePending(isStarredStatePending);
     databaseHelper.updateStarredState(entry);
     fireModelUpdated();
+
     if (isStarredStatePending)
     {
       scheduler.scheduleUploadOnlySynchonization();
     }
-
   }
 
   public void updateStates(final Collection<StateChange> stateChanges)

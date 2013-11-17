@@ -22,7 +22,9 @@ import org.apache.http.client.ClientProtocolException;
 import org.xml.sax.SAXException;
 
 import retrofit.client.Response;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 
 import com.grazerss.ArticleDbState;
 import com.grazerss.AuthenticationFailedException;
@@ -38,6 +40,7 @@ import com.grazerss.NewsRob;
 import com.grazerss.PL;
 import com.grazerss.ReadState;
 import com.grazerss.SyncJob;
+import com.grazerss.activities.LoginActivity;
 import com.grazerss.download.HtmlEntitiesDecoder;
 import com.grazerss.jobs.Job;
 import com.grazerss.oldreader.ItemContentResponse.Item;
@@ -114,7 +117,7 @@ public class OldReaderBackendProvider implements BackendProvider
       newEntry.setFeedAtomId(story.origin.streamId);
       // newEntry.setAuthor(story.authors);
       newEntry.setAlternateHRef(getLink(story.alternate));
-      newEntry.setHash(null);
+      newEntry.setHash(story.id);
       newEntry.setStarred(false);
       newEntry.setUpdated(story.crawlTimeMsec == null ? new Date().getTime() : story.crawlTimeMsec);
       setLastUpdate(story.crawlTimeMsec);
@@ -414,6 +417,12 @@ public class OldReaderBackendProvider implements BackendProvider
     {
       lastUpdate = update;
     }
+  }
+
+  @Override
+  public void startLogin(Activity activity, Context context)
+  {
+    activity.startActivity(new Intent().setClass(context, LoginActivity.class));
   }
 
   @Override

@@ -11,153 +11,181 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.http.client.ClientProtocolException;
 import org.xml.sax.SAXException;
 
+import android.app.Activity;
 import android.content.Context;
 
 import com.grazerss.jobs.Job;
 
-public interface BackendProvider {
-    final static long ONE_DAY_IN_MS = 1000 * 60 * 60 * 24;
-    public static final String GRAZERSS_LABEL = "grazerss";
+public interface BackendProvider
+{
+  class AuthenticationExpiredException extends Exception
+  {
+  }
 
-    class AuthenticationExpiredException extends Exception {
+  public static class AuthToken
+  {
+    public enum AuthType
+    {
+      AUTH_STANDALONE, AUTH
+    };
+
+    private AuthType type;
+    private String   authToken;
+
+    public AuthToken(AuthType type, String authToken)
+    {
+      this.setType(type);
+      this.authToken = authToken;
     }
 
-    class ServerBadRequestException extends Exception {
+    public String getAuthToken()
+    {
+      return authToken;
     }
 
-    public class SyncAPIException extends Exception {
-
-        private static final long serialVersionUID = -4038203280616398790L;
-
-        public SyncAPIException(String message, Throwable rootCause) {
-            super(message, rootCause);
-        }
-
-        public SyncAPIException(String message) {
-            super(message);
-        }
-
+    AuthType getAuthType()
+    {
+      return getType();
     }
 
-    static class StateChange {
-        static final int OPERATION_REMOVE = 0;
-        static final int OPERATION_ADD = 1;
-        static final int STATE_READ = 2;
-        static final int STATE_STARRED = 3;
-
-        private int state;
-        private int operation;
-
-        int getState() {
-            return state;
-        }
-
-        int getOperation() {
-            return operation;
-        }
-
-        String getAtomId() {
-            return atomId;
-        }
-
-        private String atomId;
-
-        StateChange(String atomId, int state, int operation) {
-            this.atomId = atomId;
-            this.state = state;
-            this.operation = operation;
-        }
-
-        @Override
-        public String toString() {
-            String stateLabel = "State?";
-            switch (state) {
-            case STATE_READ:
-                stateLabel = "read";
-                break;
-            case STATE_STARRED:
-                stateLabel = "starred";
-                break;
-            }
-
-            String operationLabel = operation == OPERATION_ADD ? "add" : "remove";
-            return "State: " + operationLabel + " " + stateLabel + " for " + getAtomId() + ".";
-        }
-
+    public AuthType getType()
+    {
+      return type;
     }
 
-    public static class AuthToken {
-        enum AuthType {
-            AUTH_STANDALONE, AUTH
-        };
-
-        private AuthType type;
-        private String authToken;
-
-        AuthToken(AuthType type, String authToken) {
-            this.setType(type);
-            this.authToken = authToken;
-        }
-
-        AuthType getAuthType() {
-            return getType();
-        }
-
-        public String getAuthToken() {
-            return authToken;
-        }
-
-        public String toString() {
-            return "AuthToken " + authToken.substring(0, 4) + " of type " + getType() + ".";
-        }
-
-        public AuthType getType() {
-            return type;
-        }
-
-        public void setType(AuthType type) {
-            this.type = type;
-        }
+    public void setType(AuthType type)
+    {
+      this.type = type;
     }
 
-    public String getServiceName();
+    @Override
+    public String toString()
+    {
+      if (authToken != null)
+      {
+        return "AuthToken " + authToken.substring(0, 4) + " of type " + getType() + ".";
+      }
+      else
+      {
+        return "";
+      }
+    }
+  }
 
-    public String getServiceUrl();
+  class ServerBadRequestException extends Exception
+  {
+  }
 
-    public List<DiscoveredFeed> discoverFeeds(final String query) throws SyncAPIException, IOException,
-            ServerBadRequestException, ParserConfigurationException, SAXException, ServerBadRequestException,
-            AuthenticationExpiredException;
+  public static class StateChange
+  {
+    public static final int OPERATION_REMOVE = 0;
+    public static final int OPERATION_ADD    = 1;
+    public static final int STATE_READ       = 2;
+    public static final int STATE_STARRED    = 3;
 
-    public boolean submitSubscribe(String url2subscribe) throws SyncAPIException;
+    private int             state;
+    private int             operation;
 
-    /**
-     * differentialUpdateOfArticlesStates is where the actual exact syncing
-     * magic happens
-     * 
-     * @throws AuthenticationExpiredException
-     */
-    public void differentialUpdateOfArticlesStates(final EntryManager entryManager, Job job, String stream,
-            String excludeState, ArticleDbState articleDbState) throws SAXException, IOException,
-            ParserConfigurationException, ServerBadRequestException, ServerBadRequestException,
-            AuthenticationExpiredException;
+    private String          atomId;
 
-    public void unsubscribeFeed(String feedAtomId) throws IOException, NeedsSessionException, SyncAPIException;
+    public StateChange(String atomId, int state, int operation)
+    {
+      this.atomId = atomId;
+      this.state = state;
+      this.operation = operation;
+    }
 
-    public boolean authenticate(Context context, String email, String password, String captchaToken,
-            String captchaAnswer) throws ClientProtocolException, IOException, AuthenticationFailedException;
+    String getAtomId()
+    {
+      return atomId;
+    }
 
-    public int fetchNewEntries(final EntryManager entryManager, final SyncJob job, boolean manualSync)
-            throws ClientProtocolException, IOException, NeedsSessionException, SAXException, IllegalStateException,
-            ParserConfigurationException, FactoryConfigurationError, SyncAPIException, ServerBadRequestException,
-            AuthenticationExpiredException;
+    int getOperation()
+    {
+      return operation;
+    }
 
-    public void updateSubscriptionList(EntryManager entryManager, Job job) throws IOException,
-            ParserConfigurationException, SAXException, ServerBadRequestException, AuthenticationExpiredException;
+    int getState()
+    {
+      return state;
+    }
 
-    public void logout();
+    @Override
+    public String toString()
+    {
+      String stateLabel = "State?";
+      switch (state)
+      {
+        case STATE_READ:
+          stateLabel = "read";
+          break;
+        case STATE_STARRED:
+          stateLabel = "starred";
+          break;
+      }
 
-    public int synchronizeArticles(EntryManager entryManager, SyncJob syncJob) throws MalformedURLException,
-            IOException, ParserConfigurationException, FactoryConfigurationError, SAXException, ParseException,
-            NeedsSessionException, ParseException;
+      String operationLabel = operation == OPERATION_ADD ? "add" : "remove";
+      return "State: " + operationLabel + " " + stateLabel + " for " + getAtomId() + ".";
+    }
+
+  }
+
+  public class SyncAPIException extends Exception
+  {
+
+    private static final long serialVersionUID = -4038203280616398790L;
+
+    public SyncAPIException(String message)
+    {
+      super(message);
+    }
+
+    public SyncAPIException(String message, Throwable rootCause)
+    {
+      super(message, rootCause);
+    }
+
+  }
+
+  final static long          ONE_DAY_IN_MS  = 1000 * 60 * 60 * 24;
+
+  public static final String GRAZERSS_LABEL = "grazerss";
+
+  public boolean authenticate(Context context, String email, String password, String captchaToken, String captchaAnswer)
+      throws ClientProtocolException, IOException, AuthenticationFailedException;
+
+  /**
+   * differentialUpdateOfArticlesStates is where the actual exact syncing magic happens
+   * 
+   * @throws AuthenticationExpiredException
+   */
+  public void differentialUpdateOfArticlesStates(final EntryManager entryManager, Job job, String stream, String excludeState,
+      ArticleDbState articleDbState) throws SAXException, IOException, ParserConfigurationException, ServerBadRequestException,
+      ServerBadRequestException, AuthenticationExpiredException;
+
+  public List<DiscoveredFeed> discoverFeeds(final String query) throws SyncAPIException, IOException, ServerBadRequestException,
+      ParserConfigurationException, SAXException, ServerBadRequestException, AuthenticationExpiredException;
+
+  public int fetchNewEntries(final EntryManager entryManager, final SyncJob job, boolean manualSync) throws ClientProtocolException,
+      IOException, NeedsSessionException, SAXException, IllegalStateException, ParserConfigurationException, FactoryConfigurationError,
+      SyncAPIException, ServerBadRequestException, AuthenticationExpiredException;
+
+  public String getServiceName();
+
+  public String getServiceUrl();
+
+  public void logout();
+
+  public void startLogin(Activity activity, Context context);
+
+  public boolean submitSubscribe(String url2subscribe) throws SyncAPIException;
+
+  public int synchronizeArticles(EntryManager entryManager, SyncJob syncJob) throws MalformedURLException, IOException,
+      ParserConfigurationException, FactoryConfigurationError, SAXException, ParseException, NeedsSessionException, ParseException;
+
+  public void unsubscribeFeed(String feedAtomId) throws IOException, NeedsSessionException, SyncAPIException;
+
+  public void updateSubscriptionList(EntryManager entryManager, Job job) throws IOException, ParserConfigurationException, SAXException,
+      ServerBadRequestException, AuthenticationExpiredException;
 
 }

@@ -363,7 +363,7 @@ public class Entry
     this.atomId = atomId;
   }
 
-  void setAuthor(String author)
+  public void setAuthor(String author)
   {
     this.author = author;
   }
@@ -512,7 +512,8 @@ public class Entry
       labelsString = labelsRepresentation.toString();
     }
 
-    return String.format("Entry title: %s, row-id: %s, atom-id: %s labels: %s, alternate: %s, content-size: %10d, content-type: %s content:\n%s", title, id,
+    return String.format(
+        "Entry title: %s, row-id: %s, atom-id: %s labels: %s, alternate: %s, content-size: %10d, content-type: %s content:\n%s", title, id,
         atomId, labelsString, alternateHRef, getContentSize(), contentType, content);
   }
 }

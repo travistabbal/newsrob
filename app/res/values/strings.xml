@@ -94,7 +94,7 @@ Otherwise you will be asked again for your credentials every two weeks.
 	<string name="settings_always_use_ssl_summary">Not only for login, but for all communications with the server. Not for the websites though.</string>
 
 	<string name="settings_service_provider_title">Service Provider</string>		
-	<string name="settings_service_provider_summary">Service Provider to use for synchronization.</string>
+	<string name="settings_service_provider_summary">Service Provider to use for synchronization. Changing this will log you out from the current provider and clear your cache.</string>
 		
 	<string name="settings_automatic_refreshing_category_title">Synchronization</string>
 	<string name="settings_automatic_refreshing_title">Auto Synchronization</string>

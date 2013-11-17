@@ -5,38 +5,53 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
-public class PackageChangedReceiver extends BroadcastReceiver {
+public class PackageChangedReceiver extends BroadcastReceiver
+{
 
-	private static final String TAG = PackageChangedReceiver.class.getSimpleName();
+  private static final String TAG = PackageChangedReceiver.class.getSimpleName();
 
-	@Override
-	public void onReceive(Context context, Intent intent) {
-		if (NewsRob.isDebuggingEnabled(context))
-			PL.log("onReceive called with " + intent.getAction() + ". NewsRob was upgraded.", context);
+  @Override
+  public void onReceive(Context context, Intent intent)
+  {
+    if (NewsRob.isDebuggingEnabled(context))
+    {
+      PL.log("onReceive called with " + intent.getAction() + ". NewsRob was upgraded.", context);
+    }
 
-		Bundle extras = intent.getExtras();
-		if (extras == null)
-			return;
+    Bundle extras = intent.getExtras();
+    if (extras == null)
+    {
+      return;
+    }
 
-		String affectedPackageName = context.getPackageManager().getNameForUid(extras.getInt(Intent.EXTRA_UID));
+    String affectedPackageName = context.getPackageManager().getNameForUid(extras.getInt(Intent.EXTRA_UID));
 
-		String myName = context.getPackageName();
-		if (Intent.ACTION_PACKAGE_ADDED.equals(intent.getAction())) {
-			if (EntryManager.PRO_PACKAGE_NAME.equals(affectedPackageName)) {
-				EntryManager.getInstance(context).maintainPremiumDependencies();
-				PL.log("Enabling Locale integration.", context);
-			}
-			return;
-		}
+    String myName = context.getPackageName();
+    if (Intent.ACTION_PACKAGE_ADDED.equals(intent.getAction()))
+    {
+      if (EntryManager.PRO_PACKAGE_NAME.equals(affectedPackageName))
+      {
+        EntryManager.getInstance(context).maintainPremiumDependencies();
+        PL.log("Enabling Locale integration.", context);
+      }
+      return;
+    }
 
-		// ACTION = REPLACED
+    // ACTION = REPLACED
 
-		if (!myName.equals(affectedPackageName))
-			return;
+    if (!myName.equals(affectedPackageName))
+    {
+      return;
+    }
 
-		if (NewsRob.isDebuggingEnabled(context))
-			PL.log("Re-establishing alarms.", context);
-		EntryManager.getInstance(context).getScheduler().ensureSchedulingIsEnabled();
+    if (NewsRob.isDebuggingEnabled(context))
+    {
+      PL.log("Re-establishing alarms.", context);
+    }
 
-	}
+    if (EntryManager.getInstance(context).isAutoSyncEnabled())
+    {
+      EntryManager.getInstance(context).getScheduler().ensureSchedulingIsEnabled();
+    }
+  }
 }
