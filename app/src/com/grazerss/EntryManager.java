@@ -1505,6 +1505,11 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
     return databaseHelper.getUnreadArticleCountExcludingPinned();
   }
 
+  public Map<String, Integer> getUnreadCounts()
+  {
+    return databaseHelper.getUnreadCounts();
+  }
+
   private String getWidgetPreferenceKey(int appWidgetId, String key)
   {
     return "widget" + appWidgetId + key;

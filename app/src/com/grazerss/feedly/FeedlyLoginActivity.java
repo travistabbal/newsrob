@@ -91,14 +91,14 @@ public class FeedlyLoginActivity extends Activity
             e.putString(FeedlyApi.SHPREF_KEY_ACCESS_CODE, accessCode);
             e.commit();
 
-            entryManager.saveLastSuccessfulLogin();
-
-            if (entryManager.syncCurrentlyEnabled(false))
+            FeedlyManager api = new FeedlyManager(getApplicationContext());
+            if (api.getAccessToken(accessCode))
             {
+              entryManager.saveLastSuccessfulLogin();
               entryManager.requestSynchronization(false);
-            }
 
-            finish();
+              finish();
+            }
           }
 
           // don't go to redirectUri

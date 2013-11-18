@@ -3,6 +3,7 @@ package com.grazerss;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -1348,6 +1349,28 @@ public class DB extends SQLiteOpenHelper
     return getRowCount(Entries.TABLE_NAME, "read_state = ?", new String[] { "0" });
   }
 
+  public Map<String, Integer> getUnreadCounts()
+  {
+    Map<String, Integer> data = new HashMap<String, Integer>();
+
+    Cursor c = getReadOnlyDb()
+        .rawQuery(
+            "select feeds.atom_id, count(feeds.atom_id) from entries, feeds where entries.read_state = 0 and entries.feed_id = feeds._id group by feeds.atom_id",
+            null);
+
+    if (c.moveToFirst())
+    {
+      while (c.isAfterLast() == false)
+      {
+        data.put(c.getString(0), c.getInt(1));
+        c.moveToNext();
+      }
+    }
+    c.close();
+
+    return data;
+  }
+
   public void insert(Entry entry)
   {
     ArrayList<Entry> oneEntryList = new ArrayList<Entry>(1);
@@ -2498,8 +2521,7 @@ public class DB extends SQLiteOpenHelper
       t3.stop();
 
       // Mark all articles unread that exists in the temp table and are
-      // not
-      // read state pending
+      // not read state pending
 
       Timing t4 = new Timing("DB.updateStatesFromTempTable - mark as x", context);
 

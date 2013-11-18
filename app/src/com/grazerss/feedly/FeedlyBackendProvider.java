@@ -8,6 +8,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 import javax.xml.parsers.FactoryConfigurationError;
@@ -24,6 +25,7 @@ import com.grazerss.ArticleDbState;
 import com.grazerss.AuthenticationFailedException;
 import com.grazerss.BackendProvider;
 import com.grazerss.DB;
+import com.grazerss.DB.TempTable;
 import com.grazerss.DiscoveredFeed;
 import com.grazerss.Entry;
 import com.grazerss.EntryManager;
@@ -127,7 +129,6 @@ public class FeedlyBackendProvider implements BackendProvider
 
     lastUpdate = getEntryManager().getGRUpdated();
     Long localLastUpdate = lastUpdate;
-    String continuation = null;
 
     int maxCapacity = getEntryManager().getNewsRobSettings().getStorageCapacity();
     int currentUnreadArticlesCount = getEntryManager().getUnreadArticleCountExcludingPinned();
@@ -156,15 +157,25 @@ public class FeedlyBackendProvider implements BackendProvider
     job.target = Math.min(unreadTotal - currentUnreadArticlesCount, maxDownload);
     getEntryManager().fireStatusUpdated();
 
+    String continuation = null;
     while ((fetchedArticleCount <= maxDownload) && ((currentUnreadArticlesCount + fetchedArticleCount) <= maxCapacity))
     {
-      StreamContentResponse content = api.getUnread(getEntryManager().shouldShowNewestArticlesFirst(), lastUpdate, 100, continuation);
+      boolean newestFirst = getEntryManager().shouldShowNewestArticlesFirst();
+      StreamContentResponse content;
 
-      setLastUpdate(content.updated);
+      if (getEntryManager().isGrazeRssOnlySyncingEnabled())
+      {
+        content = api.getUnreadGrazeRSSOnly(newestFirst, localLastUpdate, 100, continuation);
+      }
+      else
+      {
+        content = api.getUnread(newestFirst, localLastUpdate, 100, continuation);
+      }
+
       continuation = content.continuation;
 
       // Store article data
-      fetchedArticleCount = storeArticles(content, feeds, fetchedArticleCount, job);
+      storeArticles(content, feeds, fetchedArticleCount, job);
 
       // Stop when the server says they don't have any more
       // We have what we think we need, or the user asks us to
@@ -193,15 +204,22 @@ public class FeedlyBackendProvider implements BackendProvider
   {
     try
     {
-      int fetchedArticlesCount = 0;
-      int maxStarredArticles = getEntryManager().getNoOfStarredArticlesToKeep();
       job.setJobDescription("Fetching starred articles");
 
-      long lastStarUpdate = getEntryManager().getLastStarredSync();
-      StreamContentResponse content = api.getSaved(getEntryManager().shouldShowNewestArticlesFirst(), null, maxStarredArticles, null);
-      getEntryManager().setLastStarredSync(Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis());
+      int fetchedArticlesCount = 0;
+      int maxStarredArticles = getEntryManager().getNoOfStarredArticlesToKeep();
 
-      return storeArticles(content, feeds, fetchedArticlesCount, job);
+      // long lastStarUpdate = getEntryManager().getLastStarredSync();
+      // getEntryManager().setLastStarredSync(Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis());
+
+      StreamContentResponse content = api.getSaved(getEntryManager().shouldShowNewestArticlesFirst(), null, maxStarredArticles, null);
+      List<String> ids = storeArticles(content, feeds, fetchedArticlesCount, job);
+
+      // Update existing records to catch unstarred records
+      getEntryManager().populateTempTable(TempTable.STARRED, ids);
+      getEntryManager().updateStatesFromTempTable(ArticleDbState.STARRED, TempTable.STARRED);
+
+      return fetchedArticlesCount;
     }
     catch (Exception e)
     {
@@ -253,6 +271,12 @@ public class FeedlyBackendProvider implements BackendProvider
     }
 
     return null;
+  }
+
+  private void getOlderArticles(UnreadCountResponse unreadResponse)
+  {
+    Map<String, Integer> unreadCounts = getEntryManager().getUnreadCounts();
+
   }
 
   @Override
@@ -404,20 +428,23 @@ public class FeedlyBackendProvider implements BackendProvider
     return 0;
   }
 
-  private synchronized void setLastUpdate(Long update)
+  private synchronized void setLastUpdate(Long... updates)
   {
-    if (getEntryManager().shouldShowNewestArticlesFirst())
+    for (Long update : updates)
     {
-      if ((lastUpdate == -1) || ((update != null) && (update < lastUpdate)))
+      if (getEntryManager().shouldShowNewestArticlesFirst())
       {
-        lastUpdate = update;
+        if ((lastUpdate == -1) || ((update != null) && (update < lastUpdate)))
+        {
+          lastUpdate = update;
+        }
       }
-    }
-    else
-    {
-      if ((update != null) && (update > lastUpdate))
+      else
       {
-        lastUpdate = update;
+        if ((update != null) && (update > lastUpdate))
+        {
+          lastUpdate = update;
+        }
       }
     }
   }
@@ -428,18 +455,35 @@ public class FeedlyBackendProvider implements BackendProvider
     activity.startActivity(new Intent().setClass(context, FeedlyLoginActivity.class));
   }
 
-  private int storeArticles(StreamContentResponse content, List<Feed> feeds, int fetchedArticleCount, SyncJob job)
+  private List<String> storeArticles(StreamContentResponse content, List<Feed> feeds, int fetchedArticleCount, SyncJob job)
   {
+    List<String> idsToReturn = new ArrayList<String>(content.items.size());
+
     List<Entry> entriesToBeInserted = new ArrayList<Entry>(20);
     List<StateChange> stateChanges = new ArrayList<BackendProvider.StateChange>();
 
     for (StreamContentResponse.Item story : content.items)
     {
-      // Don't save one we already have. Mark unread instead.
+      idsToReturn.add(story.id);
+
+      // We already have this one, maintain some state and move on...
       Entry entry = getEntryManager().findEntryByAtomId(story.id);
       if (entry != null)
       {
-        stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_READ, StateChange.OPERATION_REMOVE));
+        if (story.unread)
+        {
+          stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_READ, StateChange.OPERATION_REMOVE));
+        }
+
+        if (isStarred(story))
+        {
+          stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_STARRED, StateChange.OPERATION_ADD));
+        }
+        else
+        {
+          stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_STARRED, StateChange.OPERATION_REMOVE));
+        }
+
         continue;
       }
 
@@ -461,14 +505,16 @@ public class FeedlyBackendProvider implements BackendProvider
       newEntry.setContentURL(getLink(story.alternate));
       newEntry.setContent(contentText);
       newEntry.setTitle(HtmlEntitiesDecoder.decodeString(story.title));
-      newEntry.setReadState(ReadState.UNREAD);
+      newEntry.setReadState(story.unread ? ReadState.UNREAD : ReadState.READ);
       newEntry.setFeedAtomId(story.origin.streamId);
       newEntry.setAuthor(story.author);
       newEntry.setAlternateHRef(getLink(story.alternate));
       newEntry.setHash(story.id);
       newEntry.setStarred(isStarred(story));
       newEntry.setUpdated(story.crawled == null ? new Date().getTime() : story.crawled);
-      setLastUpdate(story.crawled);
+
+      // Update our last sync level..
+      setLastUpdate(story.crawled, story.updated, story.published);
 
       // Fill in some data from the feed record....
       Feed nrFeed = getFeedFromAtomId(feeds, story.origin.streamId);
@@ -515,7 +561,9 @@ public class FeedlyBackendProvider implements BackendProvider
       stateChanges.clear();
     }
 
-    return fetchedArticleCount;
+    getEntryManager().fireModelUpdated();
+
+    return idsToReturn;
   }
 
   @Override
@@ -646,7 +694,7 @@ public class FeedlyBackendProvider implements BackendProvider
 
       long lastReadUpdate = getEntryManager().getLastReadSync();
       LatestRead latest = api.getLatestRead(lastReadUpdate);
-      getEntryManager().setLastReadSync(Math.max(lastReadUpdate, Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis()));
+      getEntryManager().setLastReadSync(Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis());
 
       for (String entryId : latest.entries)
       {
@@ -663,22 +711,21 @@ public class FeedlyBackendProvider implements BackendProvider
           {
             if ((feed.asOf != null) && (feed.asOf > lastReadUpdate))
             {
-              getEntryManager().setLastReadSync(feed.asOf);
-              lastReadUpdate = feed.asOf;
-
               List<Entry> entries = getEntryManager().findArticlesForFeedId(localFeed.getId());
 
               for (Entry entry : entries)
               {
-                stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_READ, StateChange.OPERATION_ADD));
+                if (feed.asOf > entry.getUpdated().getTime())
+                {
+                  stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_READ, StateChange.OPERATION_ADD));
+                }
               }
             }
           }
         }
-
-        getEntryManager().updateStates(stateChanges);
       }
 
+      getEntryManager().updateStates(stateChanges);
       job.setJobDescription("Server read states synced");
     }
     catch (Exception e)
