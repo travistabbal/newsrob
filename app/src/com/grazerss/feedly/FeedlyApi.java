@@ -47,6 +47,11 @@ public interface FeedlyApi
       @Query("count") Integer count, @Query("ranked") String ranked, @Query("unreadOnly") Boolean unreadOnly,
       @Query("newerThan") Long timestamp, @Query("continuation") String continuation);
 
+  @GET("/v3/streams/ids")
+  public StreamIdsResponse getStreamIds(@Header("Authorization") String authToken, @Query("streamId") String streamId,
+      @Query("count") Integer count, @Query("ranked") String ranked, @Query("unreadOnly") Boolean unreadOnly,
+      @Query("newerThan") Long timestamp, @Query("continuation") String continuation);
+
   @GET("/v3/subscriptions")
   public List<Subscriptions> getSubscriptions(@Header("Authorization") String authToken);
 

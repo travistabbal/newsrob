@@ -2053,11 +2053,12 @@ public class DB extends SQLiteOpenHelper
       try
       {
         dbase.beginTransaction();
-        stmt = dbase.compileStatement(expandTempTableName("INSERT INTO temp_ids values(?);", tempTableType));
+        stmt = dbase.compileStatement(expandTempTableName("INSERT INTO temp_ids values(?, ?);", tempTableType));
 
         for (int j = offset; (j < (offset + nextPackSize)) && (j < articleIds.size()); j++)
         {
           stmt.bindString(1, articleIds.get(j));
+          stmt.bindString(2, articleIds.get(j));
           stmt.execute();
         }
         offset += nextPackSize;
@@ -2316,7 +2317,6 @@ public class DB extends SQLiteOpenHelper
     {
       getDb().update(Entries.TABLE_NAME, cv, Entries.ATOM_ID + "=?", new String[] { atomId });
     }
-
   }
 
   void update(Entry entry)
@@ -2474,6 +2474,7 @@ public class DB extends SQLiteOpenHelper
 
     Timing t = new Timing("DB.updateStatesFromTempTable state=" + state, context);
     PL.log("DB.updateStatesFromTempTable state=" + state, context);
+    String sql;
     String stateColumn = null;
     String statePendingColumn = null;
     int targetValueOn = 1;
@@ -2493,13 +2494,11 @@ public class DB extends SQLiteOpenHelper
       stateColumn = Entries.STARRED_STATE;
       statePendingColumn = Entries.STARRED_STATE_PENDING;
     }
-    // PINNED STATE ISSUE
     else if (state == ArticleDbState.PINNED)
     {
-      throw new RuntimeException("Boy, this was unexpected!");
-      /*
-       * stateColumn = Entries.READ_STATE; statePendingColumn = Entries.PINNED_STATE_PENDING;
-       */
+      stateColumn = Entries.READ_STATE;
+      statePendingColumn = Entries.PINNED_STATE_PENDING;
+      mergePinned = true;
     }
 
     if (stateColumn == null)
@@ -2512,34 +2511,37 @@ public class DB extends SQLiteOpenHelper
     {
       dbase.beginTransaction();
 
-      // Mark all articles as read where the read_state is not pending
-      // and they were not read before
-      Timing t3 = new Timing("DB.updateStatesFromTempTable - mark existing read", context);
-      final String markExistingSQL = "UPDATE " + Entries.TABLE_NAME + " SET " + stateColumn + " = " + targetValueOff + " WHERE " + stateColumn
-          + " = " + targetValueOn + " AND " + statePendingColumn + " = 0;";
-      dbase.execSQL(markExistingSQL);
-      t3.stop();
-
-      // Mark all articles unread that exists in the temp table and are
-      // not read state pending
-
-      Timing t4 = new Timing("DB.updateStatesFromTempTable - mark as x", context);
-
-      String sql = context.getString(R.string.sql_mark_as_x);
-      sql = sql.replaceAll("-STATE-", stateColumn);
-      sql = sql.replaceAll("-STATE_PENDING-", statePendingColumn);
-      sql = sql.replaceAll("-SET-", targetValueOn + "");
-      sql = sql.replaceAll("-CLEAR-", targetValueOff + "");
-
-      dbase.execSQL(expandTempTableName(sql, tempTableType));
-      t4.stop();
-
-      if (state == ArticleDbState.READ)
+      if (state != ArticleDbState.PINNED)
       {
-        Timing t5 = new Timing("DB.updateReadStates - mark as read even when pinned", context);
+        // Mark all articles as read where the read_state is not pending
+        // and they were not read before
+        Timing t3 = new Timing("DB.updateStatesFromTempTable - mark existing read", context);
+        final String markExistingSQL = "UPDATE " + Entries.TABLE_NAME + " SET " + stateColumn + " = " + targetValueOff + " WHERE " + stateColumn
+            + " = " + targetValueOn + " AND " + statePendingColumn + " = 0;";
+        dbase.execSQL(markExistingSQL);
+        t3.stop();
 
-        dbase.execSQL(expandTempTableName(context.getString(R.string.sql_mark_as_read_even_when_pinned), tempTableType));
-        t5.stop();
+        // Mark all articles unread that exists in the temp table and are
+        // not read state pending
+
+        Timing t4 = new Timing("DB.updateStatesFromTempTable - mark as x", context);
+
+        sql = context.getString(R.string.sql_mark_as_x);
+        sql = sql.replaceAll("-STATE-", stateColumn);
+        sql = sql.replaceAll("-STATE_PENDING-", statePendingColumn);
+        sql = sql.replaceAll("-SET-", targetValueOn + "");
+        sql = sql.replaceAll("-CLEAR-", targetValueOff + "");
+
+        dbase.execSQL(expandTempTableName(sql, tempTableType));
+        t4.stop();
+
+        if (state == ArticleDbState.READ)
+        {
+          Timing t5 = new Timing("DB.updateReadStates - mark as read even when pinned", context);
+
+          dbase.execSQL(expandTempTableName(context.getString(R.string.sql_mark_as_read_even_when_pinned), tempTableType));
+          t5.stop();
+        }
       }
 
       if (mergePinned)

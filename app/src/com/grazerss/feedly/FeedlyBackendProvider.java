@@ -197,7 +197,40 @@ public class FeedlyBackendProvider implements BackendProvider
       getEntryManager().setGRUpdated(lastUpdate);
     }
 
+    // Now we have unread articles. See if any have been pinned
+    fetchPinnedArticles(feeds, job);
+
     return fetchedArticleCount;
+  }
+
+  private int fetchPinnedArticles(List<Feed> feeds, SyncJob job)
+  {
+    try
+    {
+      job.setJobDescription("Fetching pinned articles");
+      job.target = -1;
+
+      int maxCapacity = getEntryManager().getNewsRobSettings().getStorageCapacity();
+
+      StreamIdsResponse content = api.getPinnedIds(getEntryManager().shouldShowNewestArticlesFirst(), null, maxCapacity, null);
+
+      if ((content != null) && (content.ids != null))
+      {
+        // Update existing records to catch unPinned records
+        getEntryManager().populateTempTable(TempTable.PINNED, content.ids);
+        getEntryManager().updateStatesFromTempTable(ArticleDbState.PINNED, TempTable.PINNED);
+
+        return content.ids.size();
+      }
+
+      return 0;
+    }
+    catch (Exception e)
+    {
+      String message = "Problem during fetchStarredArticles: " + e.getMessage();
+      PL.log(message, context);
+    }
+    return 0;
   }
 
   private int fetchStarredArticles(List<Feed> feeds, SyncJob job)
@@ -275,6 +308,7 @@ public class FeedlyBackendProvider implements BackendProvider
 
   private void getOlderArticles(UnreadCountResponse unreadResponse)
   {
+    // select atom_id, updated_utc from entries order by updated_utc desc limit 1;
     Map<String, Integer> unreadCounts = getEntryManager().getUnreadCounts();
 
   }
@@ -346,6 +380,33 @@ public class FeedlyBackendProvider implements BackendProvider
 
     getEntryManager().clearAuthToken();
     getEntryManager().setGoogleUserId(null);
+  }
+
+  private int remotelyAlterPinnedState(Collection<Entry> entries, final String column, String desiredState)
+  {
+    List<String> entryIds = new ArrayList<String>(entries.size());
+
+    for (Entry entry : entries)
+    {
+      entryIds.add(entry.getAtomId());
+    }
+
+    if (desiredState.equals("1"))
+    {
+      if (api.markItemsPinned(entryIds))
+      {
+        getEntryManager().removePendingStateMarkers(entryIds, column);
+      }
+    }
+    else if (desiredState.equals("0"))
+    {
+      if (api.unPinItems(entryIds))
+      {
+        getEntryManager().removePendingStateMarkers(entryIds, column);
+      }
+    }
+
+    return entries.size();
   }
 
   private int remotelyAlterReadState(Collection<Entry> entries, final String column, String desiredState)
@@ -423,6 +484,10 @@ public class FeedlyBackendProvider implements BackendProvider
     else if (column.equals(DB.Entries.STARRED_STATE_PENDING))
     {
       return remotelyAlterStarredState(entries, column, desiredState);
+    }
+    else if (column.equals(DB.Entries.PINNED_STATE_PENDING))
+    {
+      return remotelyAlterPinnedState(entries, column, desiredState);
     }
 
     return 0;
@@ -616,12 +681,9 @@ public class FeedlyBackendProvider implements BackendProvider
 
       int noOfUpdated = 0;
 
-      String[] fields = { DB.Entries.READ_STATE_PENDING, DB.Entries.STARRED_STATE_PENDING
-      // DB.Entries.PINNED_STATE_PENDING
-      };
+      String[] fields = { DB.Entries.READ_STATE_PENDING, DB.Entries.STARRED_STATE_PENDING, DB.Entries.PINNED_STATE_PENDING };
       for (String f : fields)
       {
-
         String progressLabel;
         if (f == DB.Entries.READ_STATE_PENDING)
         {
@@ -703,22 +765,19 @@ public class FeedlyBackendProvider implements BackendProvider
 
       for (Feeds feed : latest.feeds)
       {
-        if (feed.id != null)
+        if ((feed.id != null) && (feed.asOf != null))
         {
           Feed localFeed = getEntryManager().findFeedByAtomId(feed.id);
 
           if (localFeed != null)
           {
-            if ((feed.asOf != null) && (feed.asOf > lastReadUpdate))
-            {
-              List<Entry> entries = getEntryManager().findArticlesForFeedId(localFeed.getId());
+            List<Entry> entries = getEntryManager().findArticlesForFeedId(localFeed.getId());
 
-              for (Entry entry : entries)
+            for (Entry entry : entries)
+            {
+              if (feed.asOf > entry.getUpdated().getTime())
               {
-                if (feed.asOf > entry.getUpdated().getTime())
-                {
-                  stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_READ, StateChange.OPERATION_ADD));
-                }
+                stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_READ, StateChange.OPERATION_ADD));
               }
             }
           }

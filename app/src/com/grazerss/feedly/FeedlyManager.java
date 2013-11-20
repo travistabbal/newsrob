@@ -43,9 +43,37 @@ public class FeedlyManager implements FeedlyKey
     }
   }
 
+  private String buildPinnedTag()
+  {
+    return "user/" + userId + "/tag/grazerss.pinned";
+  }
+
+  private String buildStarTag()
+  {
+    return "user/" + userId + "/tag/global.saved";
+  }
+
+  private String buildUnpinString(List<String> entryIds)
+  {
+    StringBuffer buf = new StringBuffer(URLEncoder.encode(buildPinnedTag()));
+    buf.append("/");
+
+    for (int i = 0; i < entryIds.size(); i++)
+    {
+      buf.append(URLEncoder.encode(entryIds.get(i)));
+
+      if (i < (entryIds.size() - 1))
+      {
+        buf.append(",");
+      }
+    }
+
+    return buf.toString();
+  }
+
   private String buildUnstarString(List<String> entryIds)
   {
-    StringBuffer buf = new StringBuffer(URLEncoder.encode("user/" + userId + "/tag/global.saved"));
+    StringBuffer buf = new StringBuffer(URLEncoder.encode(buildStarTag()));
     buf.append("/");
 
     for (int i = 0; i < entryIds.size(); i++)
@@ -98,10 +126,16 @@ public class FeedlyManager implements FeedlyKey
     return api.getLatestRead(getAuthHeader(), newerThan);
   }
 
+  public StreamIdsResponse getPinnedIds(boolean newestFirst, Long lastUpdate, Integer maxItems, String continuation)
+  {
+    String ranked = newestFirst ? "newest" : "oldest";
+    return api.getStreamIds(getAuthHeader(), buildPinnedTag(), maxItems, ranked, true, lastUpdate, continuation);
+  }
+
   public StreamContentResponse getSaved(boolean newestFirst, Long lastUpdate, Integer maxItems, String continuation)
   {
     String ranked = newestFirst ? "newest" : "oldest";
-    return api.getStreamContent(getAuthHeader(), "user/" + userId + "/tag/global.saved", maxItems, ranked, false, lastUpdate, continuation);
+    return api.getStreamContent(getAuthHeader(), buildStarTag(), maxItems, ranked, false, lastUpdate, continuation);
   }
 
   public List<Subscriptions> getSubscriptions()
@@ -153,6 +187,13 @@ public class FeedlyManager implements FeedlyKey
     e.putString(FeedlyApi.SHPREF_KEY_REFRESH_TOKEN, null);
     e.putLong(FeedlyApi.SHPREF_KEY_TOKEN_EXPIRE, -1);
     e.commit();
+  }
+
+  public boolean markItemsPinned(List<String> entryIds)
+  {
+    Response resp = api.tagItems(getAuthHeader(), buildPinnedTag(), new TagRequest(entryIds));
+
+    return (resp.getStatus() == 200);
   }
 
   public boolean markRead(List<String> ids)
@@ -214,7 +255,7 @@ public class FeedlyManager implements FeedlyKey
 
   public boolean starItems(List<String> entryIds)
   {
-    Response resp = api.tagItems(getAuthHeader(), "user/" + userId + "/tag/global.saved", new TagRequest(entryIds));
+    Response resp = api.tagItems(getAuthHeader(), buildStarTag(), new TagRequest(entryIds));
 
     return (resp.getStatus() == 200);
   }
@@ -242,6 +283,13 @@ public class FeedlyManager implements FeedlyKey
   public boolean subscribeToFeed(String feedId, String title, List<Categories> categories)
   {
     Response resp = api.subscribeToFeed(getAuthHeader(), new SubscribeFeedRequest(feedId, title, categories));
+
+    return (resp.getStatus() == 200);
+  }
+
+  public boolean unPinItems(List<String> entryIds)
+  {
+    Response resp = api.unTagItems(getAuthHeader(), buildUnpinString(entryIds));
 
     return (resp.getStatus() == 200);
   }
