@@ -135,6 +135,19 @@
     <item>100</item>
     <item>200</item>
   </string-array>
+ 
+    <string-array
+    name="service_provider_labels">
+    <item>NewsBlur</item>
+    <item>The Old Reader</item>
+    <item>Feedly</item>
+    </string-array>
+  <string-array
+    name="service_provider_values">
+    <item>com.grazerss.NewsBlurBackendProvider</item>
+    <item>com.grazerss.oldreader.OldReaderBackendProvider</item>
+    <item>com.grazerss.feedly.FeedlyBackendProvider</item>
+    </string-array>
   
   <string-array
     name="sync_type_labels">
@@ -198,7 +211,6 @@
     <item>gwt</item>
     <item>instapaper</item>
     <item>readability</item>
-    <item>viewtext</item>
   </string-array>
   <string-array
     name="settings_mobilizer_labels">
@@ -206,7 +218,6 @@
     <item>Instapaper</item>
 <!--     <item>Instapaper\n(Integration Provided \"As Is\". \nPlease don\'t report bugs.\nThanks.)</item> -->
     <item>Readability</item>
-    <item>ViewText</item>
   </string-array>
   
    <string-array
