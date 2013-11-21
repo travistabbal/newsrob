@@ -319,7 +319,7 @@ public class OldReaderBackendProvider implements BackendProvider
   @Override
   public String getServiceUrl()
   {
-    return null;
+    return "http://www.theoldreader.com";
   }
 
   private boolean handleAuthenticate(EntryManager entryManager)

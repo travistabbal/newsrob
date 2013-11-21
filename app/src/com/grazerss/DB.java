@@ -2487,7 +2487,7 @@ public class DB extends SQLiteOpenHelper
       statePendingColumn = Entries.READ_STATE_PENDING;
       targetValueOn = 0;
       targetValueOff = 1;
-      mergePinned = true;
+      mergePinned = false;
     }
     else if (state == ArticleDbState.STARRED)
     {
@@ -2598,7 +2598,7 @@ public class DB extends SQLiteOpenHelper
       statePendingColumn = Entries.READ_STATE_PENDING;
       targetValueOn = 0;
       targetValueOff = 1;
-      mergePinned = true;
+      mergePinned = false;
 
     }
     else if (state == ArticleDbState.STARRED)

@@ -535,6 +535,11 @@ public class FeedlyBackendProvider implements BackendProvider
       Entry entry = getEntryManager().findEntryByAtomId(story.id);
       if (entry != null)
       {
+        if (ReadState.PINNED.equals(entry.getReadState()))
+        {
+          continue;
+        }
+
         if (story.unread)
         {
           stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_READ, StateChange.OPERATION_REMOVE));

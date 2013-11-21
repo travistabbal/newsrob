@@ -67,13 +67,12 @@
 	<string name="menu_mark_as_read">Mark Read</string>
 	<string name="menu_mark_as_unread">Mark Unread</string>
 	<string name="enter_email_password">
-<b>Login to Server needed</b>
-\n\n
-GrazeRSS will connect to the online service. Therefore your username and password is needed.\n\n
+Login to &lt;b>$SERVICE$&lt;/b> needed
+&lt;p>&lt;p>
+GrazeRSS will connect to &lt;b>$SERVICE$&lt;/b>. Therefore your username and password is needed.&lt;p>&lt;p>
 You can decide if your password should be stored on this device.
-Otherwise you will be asked again for your credentials every sync.\n\n
-If you haven\'t used the selected server before, please visit \n
-the service provider website and set up an account. 
+Otherwise you will be asked again for your credentials every sync.&lt;p>&lt;p>
+If you haven\'t used &lt;b>$SERVICE$&lt;/b> before, please visit $SERVICE_URL$ and set up an account. 
 	</string>
 	<string name="enter_email_password_captcha">
 <b>Login with CAPTCHA needed</b>
