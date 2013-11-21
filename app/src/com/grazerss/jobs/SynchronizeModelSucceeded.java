@@ -1,19 +1,22 @@
 package com.grazerss.jobs;
 
-public class SynchronizeModelSucceeded extends ModelUpdateResult {
-	int noOfEntriesUpdated = -1;
+public class SynchronizeModelSucceeded extends ModelUpdateResult
+{
+  int noOfEntriesUpdated = -1;
 
-	public SynchronizeModelSucceeded(int noOfNewEntriesUpdated) {
-		this.noOfEntriesUpdated = noOfNewEntriesUpdated;
-	}
+  public SynchronizeModelSucceeded(int noOfNewEntriesUpdated)
+  {
+    this.noOfEntriesUpdated = noOfNewEntriesUpdated;
+  }
 
-	public int getNoOfEntriesUpdated() {
-		return noOfEntriesUpdated;
-	}
+  public int getNoOfEntriesUpdated()
+  {
+    return noOfEntriesUpdated;
+  }
 
-	@Override
-	public
-	String getMessage() {
-		return String.format("%s entries updated.", noOfEntriesUpdated);
-	}
+  @Override
+  public String getMessage()
+  {
+    return String.format("%s entries updated.", noOfEntriesUpdated);
+  }
 }

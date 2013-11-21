@@ -28,207 +28,240 @@ import com.grazerss.EntryManager;
 import com.grazerss.R;
 import com.grazerss.BackendProvider.SyncAPIException;
 
-public class SubscribeFeedActivity extends Activity {
+public class SubscribeFeedActivity extends Activity
+{
 
-    private ListView listView;
-    private View progressMonitor;
-    private View empty;
-    private EditText query;
+  private ListView listView;
+  private View     progressMonitor;
+  private View     empty;
+  private EditText query;
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState)
+  {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.subscribe_feed);
+
+    progressMonitor = findViewById(R.id.progress);
+    listView = (ListView) findViewById(R.id.discovered_feeds_list);
+    empty = findViewById(R.id.empty);
+    query = (EditText) findViewById(R.id.query);
+
+    Button searchButton = (Button) findViewById(R.id.search_button);
+    searchButton.setOnClickListener(new OnClickListener()
+    {
+      @Override
+      public void onClick(View v)
+      {
+        initiateSearch();
+      }
+    });
+    query.setOnEditorActionListener(new OnEditorActionListener()
+    {
+
+      @Override
+      public boolean onEditorAction(TextView v, int actionId, KeyEvent event)
+      {
+        initiateSearch();
+        return true;
+      }
+    });
+
+    // TEXT & SUBJECT are available per se
+    if (getIntent().hasExtra(Intent.EXTRA_TEXT))
+    {
+      query.setText(getIntent().getStringExtra(Intent.EXTRA_TEXT));
+      searchButton.performClick();
+    }
+
+  }
+
+  void initiateSearch()
+  {
+    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+    imm.hideSoftInputFromWindow(query.getWindowToken(), 0);
+    new DiscoverFeedsTask().execute(query.getText().toString().replaceAll("\\s", ""));
+  }
+
+  private void showProgressMonitor()
+  {
+    listView.setVisibility(View.GONE);
+    empty.setVisibility(View.GONE);
+    progressMonitor.setVisibility(View.VISIBLE);
+  }
+
+  private void showList()
+  {
+    progressMonitor.setVisibility(View.GONE);
+    if (listView.getCount() == 0)
+      empty.setVisibility(View.VISIBLE);
+    else
+    {
+      listView.setVisibility(View.VISIBLE);
+    }
+  }
+
+  class SubscribeFeedTask extends AsyncTask<String, Void, Void>
+  {
+
+    private Exception exception;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.subscribe_feed);
+    protected Void doInBackground(String... feedUrls)
+    {
 
-        progressMonitor = findViewById(R.id.progress);
-        listView = (ListView) findViewById(R.id.discovered_feeds_list);
-        empty = findViewById(R.id.empty);
-        query = (EditText) findViewById(R.id.query);
-
-        Button searchButton = (Button) findViewById(R.id.search_button);
-        searchButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                initiateSearch();
-            }
-        });
-        query.setOnEditorActionListener(new OnEditorActionListener() {
-
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                initiateSearch();
-                return true;
-            }
-        });
-
-        // TEXT & SUBJECT are available per se
-        if (getIntent().hasExtra(Intent.EXTRA_TEXT)) {
-            query.setText(getIntent().getStringExtra(Intent.EXTRA_TEXT));
-            searchButton.performClick();
+      for (String feedUrl : feedUrls)
+        try
+        {
+          EntryManager.getInstance(SubscribeFeedActivity.this).getSyncInterface().submitSubscribe(feedUrl);
+        }
+        catch (SyncAPIException e)
+        {
+          exception = e;
+          e.printStackTrace();
+          break;
         }
 
+      return null;
     }
 
-    void initiateSearch() {
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(query.getWindowToken(), 0);
-        new DiscoverFeedsTask().execute(query.getText().toString().replaceAll("\\s", ""));
+    @Override
+    protected void onPostExecute(Void result)
+    {
+      super.onPostExecute(result);
+
+      showList();
+
+      if (exception != null)
+        Toast.makeText(SubscribeFeedActivity.this, exception.getClass().getSimpleName() + ": " + exception.getMessage(), Toast.LENGTH_LONG)
+            .show();
+      else
+        Toast.makeText(SubscribeFeedActivity.this, "Feed subscribed.\nSync/Refresh to fetch articles.", Toast.LENGTH_LONG).show();
+
     }
 
-    private void showProgressMonitor() {
-        listView.setVisibility(View.GONE);
-        empty.setVisibility(View.GONE);
-        progressMonitor.setVisibility(View.VISIBLE);
+    @Override
+    protected void onPreExecute()
+    {
+      super.onPreExecute();
+
+      showProgressMonitor();
     }
 
-    private void showList() {
+  }
+
+  class DiscoverFeedsTask extends AsyncTask<String, Void, List<DiscoveredFeed>>
+  {
+
+    private Exception exception;
+
+    @Override
+    protected void onPreExecute()
+    {
+      super.onPreExecute();
+
+      showProgressMonitor();
+    }
+
+    @Override
+    protected void onPostExecute(final List<DiscoveredFeed> result)
+    {
+
+      super.onPostExecute(result);
+
+      if (result == null)
+      {
         progressMonitor.setVisibility(View.GONE);
-        if (listView.getCount() == 0)
-            empty.setVisibility(View.VISIBLE);
-        else {
-            listView.setVisibility(View.VISIBLE);
-        }
-    }
 
-    class SubscribeFeedTask extends AsyncTask<String, Void, Void> {
+        empty.setVisibility(View.VISIBLE);
 
-        private Exception exception;
+        if (exception != null)
+          Toast.makeText(SubscribeFeedActivity.this, exception.getClass().getSimpleName() + ": " + exception.getMessage(), Toast.LENGTH_LONG)
+              .show();
+      }
+      else
+      {
 
-        @Override
-        protected Void doInBackground(String... feedUrls) {
+        ArrayAdapter<DiscoveredFeed> listAdapter = populateList(result);
+        listView.setAdapter(listAdapter);
 
-            for (String feedUrl : feedUrls)
-                try {
-                    EntryManager.getInstance(SubscribeFeedActivity.this).getSyncInterface().submitSubscribe(feedUrl);
-                } catch (SyncAPIException e) {
-                    exception = e;
-                    e.printStackTrace();
-                    break;
-                }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            super.onPostExecute(result);
-
-            showList();
-
-            if (exception != null)
-                Toast.makeText(SubscribeFeedActivity.this,
-                        exception.getClass().getSimpleName() + ": " + exception.getMessage(), Toast.LENGTH_LONG).show();
-            else
-                Toast.makeText(SubscribeFeedActivity.this, "Feed subscribed.\nSync/Refresh to fetch articles.",
-                        Toast.LENGTH_LONG).show();
-
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            showProgressMonitor();
-        }
+        showList();
+      }
 
     }
 
-    class DiscoverFeedsTask extends AsyncTask<String, Void, List<DiscoveredFeed>> {
-
-        private Exception exception;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            showProgressMonitor();
-        }
+    private ArrayAdapter<DiscoveredFeed> populateList(final List<DiscoveredFeed> result)
+    {
+      ArrayAdapter<DiscoveredFeed> listAdapter = new ArrayAdapter<DiscoveredFeed>(SubscribeFeedActivity.this, R.layout.discovered_feed, result)
+      {
 
         @Override
-        protected void onPostExecute(final List<DiscoveredFeed> result) {
+        public View getView(int position, View convertView, ViewGroup parent)
+        {
+          final DiscoveredFeed df = result.get(position);
+          if (convertView == null)
+            convertView = getLayoutInflater().inflate(R.layout.discovered_feed, null);
 
-            super.onPostExecute(result);
+          TextView tv = (TextView) convertView.findViewById(R.id.title);
+          SpannableString content = new SpannableString(df.title);
+          content.setSpan(new UnderlineSpan(), 0, content.length(), 0);
+          tv.setText(content);
 
-            if (result == null) {
-                progressMonitor.setVisibility(View.GONE);
+          if (df.alternateUrl != null)
+          {
+            tv.setOnClickListener(new View.OnClickListener()
+            {
 
-                empty.setVisibility(View.VISIBLE);
+              @Override
+              public void onClick(View v)
+              {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(df.alternateUrl)));
+              }
+            });
+          }
+          else
+            tv.setOnClickListener(null);
 
-                if (exception != null)
-                    Toast.makeText(SubscribeFeedActivity.this,
-                            exception.getClass().getSimpleName() + ": " + exception.getMessage(), Toast.LENGTH_LONG)
-                            .show();
-            } else {
+          tv = (TextView) convertView.findViewById(R.id.url);
+          tv.setText(df.feedUrl);
 
-                ArrayAdapter<DiscoveredFeed> listAdapter = populateList(result);
-                listView.setAdapter(listAdapter);
+          tv = (TextView) convertView.findViewById(R.id.snippet);
+          tv.setText(df.snippet != null ? df.snippet : "");
+          tv.setVisibility(df.snippet != null ? View.VISIBLE : View.GONE);
 
-                showList();
+          Button b = (Button) convertView.findViewById(R.id.subscribe_button);
+          b.setOnClickListener(new OnClickListener()
+          {
+
+            @Override
+            public void onClick(View v)
+            {
+              new SubscribeFeedTask().execute(df.feedUrl);
+
             }
+          });
 
+          return convertView;
         }
-
-        private ArrayAdapter<DiscoveredFeed> populateList(final List<DiscoveredFeed> result) {
-            ArrayAdapter<DiscoveredFeed> listAdapter = new ArrayAdapter<DiscoveredFeed>(SubscribeFeedActivity.this,
-                    R.layout.discovered_feed, result) {
-
-                @Override
-                public View getView(int position, View convertView, ViewGroup parent) {
-                    final DiscoveredFeed df = result.get(position);
-                    if (convertView == null)
-                        convertView = getLayoutInflater().inflate(R.layout.discovered_feed, null);
-
-                    TextView tv = (TextView) convertView.findViewById(R.id.title);
-                    SpannableString content = new SpannableString(df.title);
-                    content.setSpan(new UnderlineSpan(), 0, content.length(), 0);
-                    tv.setText(content);
-
-                    if (df.alternateUrl != null) {
-                        tv.setOnClickListener(new View.OnClickListener() {
-
-                            @Override
-                            public void onClick(View v) {
-                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(df.alternateUrl)));
-                            }
-                        });
-                    } else
-                        tv.setOnClickListener(null);
-
-                    tv = (TextView) convertView.findViewById(R.id.url);
-                    tv.setText(df.feedUrl);
-
-                    tv = (TextView) convertView.findViewById(R.id.snippet);
-                    tv.setText(df.snippet != null ? df.snippet : "");
-                    tv.setVisibility(df.snippet != null ? View.VISIBLE : View.GONE);
-
-                    Button b = (Button) convertView.findViewById(R.id.subscribe_button);
-                    b.setOnClickListener(new OnClickListener() {
-
-                        @Override
-                        public void onClick(View v) {
-                            new SubscribeFeedTask().execute(df.feedUrl);
-
-                        }
-                    });
-
-                    return convertView;
-                }
-            };
-            return listAdapter;
-        }
-
-        @Override
-        protected List<DiscoveredFeed> doInBackground(String... params) {
-            List<DiscoveredFeed> result = null;
-
-            try {
-                result = EntryManager.getInstance(SubscribeFeedActivity.this).getSyncInterface()
-                        .discoverFeeds(params[0]);
-            } catch (Exception e) {
-                this.exception = e;
-            }
-            return result;
-        }
-
+      };
+      return listAdapter;
     }
+
+    @Override
+    protected List<DiscoveredFeed> doInBackground(String... params)
+    {
+      List<DiscoveredFeed> result = null;
+
+      try
+      {
+        result = EntryManager.getInstance(SubscribeFeedActivity.this).getSyncInterface().discoverFeeds(params[0]);
+      }
+      catch (Exception e)
+      {
+        this.exception = e;
+      }
+      return result;
+    }
+
+  }
 }

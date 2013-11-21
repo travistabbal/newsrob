@@ -3,23 +3,27 @@ package com.grazerss.download;
 import java.net.URL;
 
 @SuppressWarnings("serial")
-public class WrongStatusException extends DownloadException {
+public class WrongStatusException extends DownloadException
+{
 
-	private int statusCode;
-	private URL url;
+  private int statusCode;
+  private URL url;
 
-	public WrongStatusException(URL url, int statusCode) {
-		super("Wrong Status Code, expected 200, but was " + statusCode);
-		this.statusCode = statusCode;
-		this.url = url;
-	}
+  public WrongStatusException(URL url, int statusCode)
+  {
+    super("Wrong Status Code, expected 200, but was " + statusCode);
+    this.statusCode = statusCode;
+    this.url = url;
+  }
 
-	URL getURL() {
-		return url;
-	}
+  URL getURL()
+  {
+    return url;
+  }
 
-	int getStatusCode() {
-		return statusCode;
-	}
+  int getStatusCode()
+  {
+    return statusCode;
+  }
 
 }

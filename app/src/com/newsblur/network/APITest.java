@@ -6,24 +6,28 @@ import com.grazerss.NewsRob;
 import com.newsblur.network.domain.FeedFolderResponse;
 import com.newsblur.network.domain.LoginResponse;
 
-public class APITest {
+public class APITest
+{
 
-    public static void startTest(final Context context) {
-        Thread t = new Thread(new Runnable() {
+  public static void startTest(final Context context)
+  {
+    Thread t = new Thread(new Runnable()
+    {
 
-            @Override
-            public void run() {
-                String userId = NewsRob.getDebugProperties(context).getProperty("syncUserId", null);
-                String password = NewsRob.getDebugProperties(context).getProperty("syncPassword", null);
+      @Override
+      public void run()
+      {
+        String userId = NewsRob.getDebugProperties(context).getProperty("syncUserId", null);
+        String password = NewsRob.getDebugProperties(context).getProperty("syncPassword", null);
 
-                APIManager manager = new APIManager(context);
-                LoginResponse login = manager.login(userId, password);
-                FeedFolderResponse list = manager.getFolderFeedMapping(true);
+        APIManager manager = new APIManager(context);
+        LoginResponse login = manager.login(userId, password);
+        FeedFolderResponse list = manager.getFolderFeedMapping(true);
 
-                System.out.println();
-            }
-        });
-        t.start();
-    }
+        System.out.println();
+      }
+    });
+    t.start();
+  }
 
 }

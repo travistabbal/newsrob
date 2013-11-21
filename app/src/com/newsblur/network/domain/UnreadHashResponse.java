@@ -14,37 +14,41 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.annotations.SerializedName;
 
-public class UnreadHashResponse {
+public class UnreadHashResponse
+{
 
-    @SerializedName("unread_feed_story_hashes")
-    public Map<String, List<String>> unreadHashes;
+  @SerializedName("unread_feed_story_hashes")
+  public Map<String, List<String>> unreadHashes;
 
-    public Map<String, Long> flatHashList = new HashMap<String, Long>();
+  public Map<String, Long>         flatHashList = new HashMap<String, Long>();
 
-    public boolean authenticated;
+  public boolean                   authenticated;
 
-    public UnreadHashResponse(String json, Gson gson) {
-        unreadHashes = new HashMap<String, List<String>>();
+  public UnreadHashResponse(String json, Gson gson)
+  {
+    unreadHashes = new HashMap<String, List<String>>();
 
-        JsonParser parser = new JsonParser();
-        JsonObject asJsonObject = parser.parse(json).getAsJsonObject();
+    JsonParser parser = new JsonParser();
+    JsonObject asJsonObject = parser.parse(json).getAsJsonObject();
 
-        this.authenticated = asJsonObject.get("authenticated").getAsBoolean();
+    this.authenticated = asJsonObject.get("authenticated").getAsBoolean();
 
-        JsonObject feedObject = (JsonObject) asJsonObject.get("unread_feed_story_hashes");
-        Set<Entry<String, JsonElement>> jsonEntrySet = feedObject.entrySet();
+    JsonObject feedObject = (JsonObject) asJsonObject.get("unread_feed_story_hashes");
+    Set<Entry<String, JsonElement>> jsonEntrySet = feedObject.entrySet();
 
-        for (Entry<java.lang.String, JsonElement> entry : jsonEntrySet) {
-            String key = entry.getKey();
-            List<String> strings = new ArrayList<String>();
+    for (Entry<java.lang.String, JsonElement> entry : jsonEntrySet)
+    {
+      String key = entry.getKey();
+      List<String> strings = new ArrayList<String>();
 
-            for (JsonElement e : entry.getValue().getAsJsonArray()) {
-                JsonArray arr = e.getAsJsonArray();
-                strings.add(arr.get(0).getAsString());
-                flatHashList.put(arr.get(0).getAsString(), (long) arr.get(1).getAsBigDecimal().intValue());
-            }
+      for (JsonElement e : entry.getValue().getAsJsonArray())
+      {
+        JsonArray arr = e.getAsJsonArray();
+        strings.add(arr.get(0).getAsString());
+        flatHashList.put(arr.get(0).getAsString(), (long) arr.get(1).getAsBigDecimal().intValue());
+      }
 
-            unreadHashes.put(key, strings);
-        }
+      unreadHashes.put(key, strings);
     }
+  }
 }

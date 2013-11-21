@@ -1,8 +1,9 @@
 package com.grazerss.auth;
 
-public interface IAuthenticationCallback {
+public interface IAuthenticationCallback
+{
 
-	public void onAuthTokenReceived(String googleAccount, String authToken);
+  public void onAuthTokenReceived(String googleAccount, String authToken);
 
-	public void onError(Exception e);
+  public void onError(Exception e);
 }

@@ -1,5 +1,6 @@
 package com.newsblur.util;
 
-public interface ReadFilterChangedListener {
+public interface ReadFilterChangedListener
+{
   void readFilterChanged(ReadFilter newValue);
 }

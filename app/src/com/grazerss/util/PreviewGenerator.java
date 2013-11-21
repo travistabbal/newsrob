@@ -25,283 +25,311 @@ import android.graphics.RectF;
 
 import com.grazerss.PL;
 
-public class PreviewGenerator {
+public class PreviewGenerator
+{
 
-    private File assetsDir;
+  private File                              assetsDir;
 
-    private int targetHeight;
-    private int targetWidth;
+  private int                               targetHeight;
+  private int                               targetWidth;
 
-    private int roundedCornerRadiusPx;
+  private int                               roundedCornerRadiusPx;
 
-    private Context context;
+  private Context                           context;
 
-    private static final Pattern invalidExtensionPattern = Pattern.compile(".+[.]htm.nr$", Pattern.CASE_INSENSITIVE);
+  private static final Pattern              invalidExtensionPattern = Pattern.compile(".+[.]htm.nr$", Pattern.CASE_INSENSITIVE);
 
-    private static final Filter filter = new Filter();
-    private static final FileLengthComparator comparator = new FileLengthComparator();
+  private static final Filter               filter                  = new Filter();
+  private static final FileLengthComparator comparator              = new FileLengthComparator();
 
-    public PreviewGenerator(Context ctx, File assetsDir, int targetWidth, int targetHeight, int roundedCornerRadiusPx) {
-        this.assetsDir = assetsDir;
+  public PreviewGenerator(Context ctx, File assetsDir, int targetWidth, int targetHeight, int roundedCornerRadiusPx)
+  {
+    this.assetsDir = assetsDir;
 
-        this.targetHeight = targetHeight;
-        this.targetWidth = targetWidth;
+    this.targetHeight = targetHeight;
+    this.targetWidth = targetWidth;
 
-        this.roundedCornerRadiusPx = roundedCornerRadiusPx;
+    this.roundedCornerRadiusPx = roundedCornerRadiusPx;
 
-        this.context = ctx;
+    this.context = ctx;
 
+  }
+
+  /**
+   * Can only be called to downscale images, never upscale
+   */
+  public static Rect getScaledRectangle(int srcWidth, int srcHeight, int dstWidth, int dstHeight)
+  {
+
+    final double widthFactor = srcWidth * 1.0f / dstWidth;
+    final double heightFactor = srcHeight * 1.0f / dstHeight;
+
+    // Prefer the dimension that needs to be
+    // scaled less ... and consequently later(!) on
+    // cut off the excess size of the other dimension
+    final double scaleFactor = Math.min(widthFactor, heightFactor);
+
+    // if (scaleFactor < 1.0f)
+    // throw new
+    // RuntimeException("getDestinationSizeAndOffset can only be used to downscale dimensions, not up.");
+
+    final int excessWidth = (int) ((srcWidth - (dstWidth * scaleFactor)));
+    final int excessHeight = (int) ((srcHeight - (dstHeight * scaleFactor)));
+
+    final Rect r = new Rect();
+
+    r.left = excessWidth / 2;
+    r.top = excessHeight / 2;
+    r.bottom = srcHeight - r.top;
+    r.right = srcWidth - r.left;
+
+    return r;
+  }
+
+  /**
+   * @return true when a preview was generated.
+   */
+  public boolean generatePreview()
+  {
+    Timing t = new Timing("Generate preview.", context);
+    try
+    {
+      File image = findBiggestImageFile();
+      if (image == null)
+      {
+        PL.log("PreviewGenerator: No suitable biggest image file found.", context);
+        return false;
+      }
+      return doGeneratePreview(image);
+    }
+    finally
+    {
+      t.stop();
     }
 
-    /**
-     * Can only be called to downscale images, never upscale
-     */
-    public static Rect getScaledRectangle(int srcWidth, int srcHeight, int dstWidth, int dstHeight) {
+  }
 
-        final double widthFactor = srcWidth * 1.0f / dstWidth;
-        final double heightFactor = srcHeight * 1.0f / dstHeight;
+  protected List<File> findAllImageFiles()
+  {
+    File[] files = assetsDir.listFiles(filter);
+    if (files != null)
+      return Arrays.asList(files);
+    else
+      return new ArrayList<File>();
+  }
 
-        // Prefer the dimension that needs to be
-        // scaled less ... and consequently later(!) on
-        // cut off the excess size of the other dimension
-        final double scaleFactor = Math.min(widthFactor, heightFactor);
+  protected File findBiggestImageFile()
+  {
+    List<File> allImages = findAllImageFiles();
+    if (allImages.isEmpty())
+      return null;
 
-        // if (scaleFactor < 1.0f)
-        // throw new
-        // RuntimeException("getDestinationSizeAndOffset can only be used to downscale dimensions, not up.");
+    Collections.sort(allImages, comparator);
 
-        final int excessWidth = (int) ((srcWidth - (dstWidth * scaleFactor)));
-        final int excessHeight = (int) ((srcHeight - (dstHeight * scaleFactor)));
+    // copy only images that are bigger than x bytes
+    List<File> allImages2 = new ArrayList<File>(allImages.size());
 
-        final Rect r = new Rect();
+    for (File file : allImages)
+    {
+      if (file.length() > getMinSizeInBytes())
+      {
+        int height = -1;
+        int width = -1;
 
-        r.left = excessWidth / 2;
-        r.top = excessHeight / 2;
-        r.bottom = srcHeight - r.top;
-        r.right = srcWidth - r.left;
+        synchronized (PreviewGenerator.class)
+        {
+          // using the class based synchronization to prevent to much
+          // memory usage
 
-        return r;
-    }
-
-    /**
-     * @return true when a preview was generated.
-     */
-    public boolean generatePreview() {
-        Timing t = new Timing("Generate preview.", context);
-        try {
-            File image = findBiggestImageFile();
-            if (image == null) {
-                PL.log("PreviewGenerator: No suitable biggest image file found.", context);
-                return false;
-            }
-            return doGeneratePreview(image);
-        } finally {
-            t.stop();
+          Bitmap bm = null;
+          try
+          {
+            bm = BitmapFactory.decodeFile(file.getAbsolutePath(), null);
+          }
+          catch (OutOfMemoryError ooe)
+          {
+            PL.log("PreviewGenerator: " + file.getAbsolutePath() + " was too big (OOM) in findingBiggestImageFile. Skipping it. "
+                + getMemoryStatus(), context);
+          }
+          if (bm == null)
+            continue;
+          width = bm.getWidth();
+          height = bm.getHeight();
+          bm.recycle();
         }
-
-    }
-
-    protected List<File> findAllImageFiles() {
-        File[] files = assetsDir.listFiles(filter);
-        if (files != null)
-            return Arrays.asList(files);
+        if (width >= targetWidth / 2 && height >= targetHeight / 2)
+          allImages2.add(file);
         else
-            return new ArrayList<File>();
+          PL.log("PreviewGenerator: Skipped " + file + " because it was only " + width + " x " + height + ". Looking for at least "
+              + targetWidth / 2 + " x " + targetHeight / 2, context);
+      }
+      else
+        PL.log("PreviewGenerator: Skipped " + file + " because it is too small.", context);
     }
 
-    protected File findBiggestImageFile() {
-        List<File> allImages = findAllImageFiles();
-        if (allImages.isEmpty())
-            return null;
+    if (allImages2.isEmpty())
+      return null;
 
-        Collections.sort(allImages, comparator);
+    return allImages2.get(allImages2.size() - 1);
+  }
 
-        // copy only images that are bigger than x bytes
-        List<File> allImages2 = new ArrayList<File>(allImages.size());
+  private String getMemoryStatus()
+  {
+    Runtime rt = Runtime.getRuntime();
+    return String.format("-- Memory free: %4.2fMB total: %4.2fMB max: %4.2fMB\n", rt.freeMemory() / 1024 / 1024.0,
+        rt.totalMemory() / 1024 / 1024.0, rt.maxMemory() / 1024 / 1024.0);
+  }
 
-        for (File file : allImages) {
-            if (file.length() > getMinSizeInBytes()) {
-                int height = -1;
-                int width = -1;
+  protected static int getMinSizeInBytes()
+  {
+    return 2048;
+  }
 
-                synchronized (PreviewGenerator.class) {
-                    // using the class based synchronization to prevent to much
-                    // memory usage
+  protected static int getMaxSizeInBytes()
+  {
+    return 2048 * 1024;
+  }
 
-                    Bitmap bm = null;
-                    try {
-                        bm = BitmapFactory.decodeFile(file.getAbsolutePath(), null);
-                    } catch (OutOfMemoryError ooe) {
-                        PL.log("PreviewGenerator: " + file.getAbsolutePath()
-                                + " was too big (OOM) in findingBiggestImageFile. Skipping it. " + getMemoryStatus(),
-                                context);
-                    }
-                    if (bm == null)
-                        continue;
-                    width = bm.getWidth();
-                    height = bm.getHeight();
-                    bm.recycle();
-                }
-                if (width >= targetWidth / 2 && height >= targetHeight / 2)
-                    allImages2.add(file);
-                else
-                    PL.log("PreviewGenerator: Skipped " + file + " because it was only " + width + " x " + height
-                            + ". Looking for at least " + targetWidth / 2 + " x " + targetHeight / 2, context);
-            } else
-                PL.log("PreviewGenerator: Skipped " + file + " because it is too small.", context);
-        }
+  /**
+   * @return true when a preview was generated.
+   */
+  protected boolean doGeneratePreview(File fromImage)
+  {
+    BitmapFactory.Options options = new BitmapFactory.Options();
+    // options.inScaled = true;
 
-        if (allImages2.isEmpty())
-            return null;
+    // options.outWidth = this.targetWidth;
+    // options.outHeight = this.targetHeight;
 
-        return allImages2.get(allImages2.size() - 1);
+    int fileSize = (int) fromImage.length();
+    int sampleFactor = 1;
+
+    while (fileSize / sampleFactor > 500 * 1024)
+      sampleFactor *= 2;
+
+    PL.log("Sampling " + fromImage.getAbsolutePath() + " size=" + (fromImage.length() / 1024) + " scaleFactor=" + sampleFactor
+        + " Resulting size= " + (fromImage.length() / 1024 / sampleFactor), context);
+    options.inSampleSize = sampleFactor;
+
+    File outputFile = new File(assetsDir, "preview.pngnr");
+    try
+    {
+      synchronized (PreviewGenerator.class)
+      {
+        // using the class based synchronization to prevent to much
+        // memory usage
+
+        FileOutputStream fos = new FileOutputStream(outputFile);
+
+        Bitmap inBm = BitmapFactory.decodeFile(fromImage.getAbsolutePath(), options);
+
+        Rect r = getScaledRectangle(inBm.getWidth(), inBm.getHeight(), this.targetWidth, this.targetHeight);
+
+        Bitmap cutoffScaledBitmap = Bitmap.createBitmap(inBm, r.left, r.top, r.right - r.left, r.bottom - r.top);
+
+        Bitmap outBm = Bitmap.createScaledBitmap(cutoffScaledBitmap, this.targetWidth, targetHeight, true);
+        cutoffScaledBitmap.recycle();
+        cutoffScaledBitmap = null;
+
+        inBm.recycle();
+        inBm = null;
+
+        Bitmap roundedBm = getRoundedCornerBitmap(outBm);
+        outBm.recycle();
+        outBm = null;
+
+        roundedBm.compress(CompressFormat.PNG, 100, fos);
+
+        fos.close();
+
+        // inBm.recycle();
+        // outBm.recycle();
+        // cutoffScaledBitmap.recycle();
+        roundedBm.recycle();
+      }
     }
 
-    private String getMemoryStatus() {
-        Runtime rt = Runtime.getRuntime();
-        return String.format("-- Memory free: %4.2fMB total: %4.2fMB max: %4.2fMB\n", rt.freeMemory() / 1024 / 1024.0,
-                rt.totalMemory() / 1024 / 1024.0, rt.maxMemory() / 1024 / 1024.0);
+    catch (IOException e)
+    {
+      e.printStackTrace();
+      if (outputFile != null)
+        PL.log("Deleting output file: " + outputFile.delete(), context);
+      return false;
+    }
+    catch (OutOfMemoryError ooe)
+    {
+      ooe.printStackTrace();
+      PL.log("PreviewGenerator: Bitmap was too big (OOM) in generatingPreview. Skipping it. " + getMemoryStatus(), context);
+      if (outputFile != null)
+        PL.log("Deleting output file: " + outputFile.delete(), context);
+
+      return false;
     }
 
-    protected static int getMinSizeInBytes() {
-        return 2048;
+    return true;
+  }
+
+  private Bitmap getRoundedCornerBitmap(Bitmap bitmap)
+  {
+    Bitmap output = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Config.ARGB_8888);
+    Canvas canvas = new Canvas(output);
+    canvas.drawARGB(0, 0, 0, 0);
+
+    final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+    final RectF rectF = new RectF(rect);
+
+    final int color = 0xffffffff;
+    final Paint paint = new Paint();
+
+    paint.setAntiAlias(true);
+    paint.setColor(color);
+    canvas.drawRoundRect(rectF, roundedCornerRadiusPx, roundedCornerRadiusPx, paint);
+
+    paint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
+
+    canvas.drawBitmap(bitmap, 0, 0, paint);
+
+    return output;
+  }
+
+  static class Filter implements FilenameFilter
+  {
+    @Override
+    public boolean accept(File dir, String filename)
+    {
+      boolean validExtension = !invalidExtensionPattern.matcher(filename).find();// true
+      // ||
+      // validExtensionsPattern.matcher(filename).find();
+      if (!validExtension)
+        return false;
+
+      long sizeBytes = new File(dir, filename).length();
+      boolean rightSize = (sizeBytes < getMaxSizeInBytes()) && sizeBytes > getMinSizeInBytes(); // Only
+      // check
+      // files
+      // smaller
+      // than
+      // 150
+      // KB.
+      if (!rightSize)
+        return false;
+      boolean fileMightBeAd = !filename.toLowerCase().contains("_ad");
+      return fileMightBeAd;
+    }
+  }
+
+  /**
+   * 
+   * Bigger files are bigger than smaller files.
+   * 
+   */
+  static class FileLengthComparator implements Comparator<File>
+  {
+    @Override
+    public int compare(File f1, File f2)
+    {
+      return (int) (f1.length() - f2.length());
     }
 
-    protected static int getMaxSizeInBytes() {
-        return 2048 * 1024;
-    }
-
-    /**
-     * @return true when a preview was generated.
-     */
-    protected boolean doGeneratePreview(File fromImage) {
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        // options.inScaled = true;
-
-        // options.outWidth = this.targetWidth;
-        // options.outHeight = this.targetHeight;
-
-        int fileSize = (int) fromImage.length();
-        int sampleFactor = 1;
-
-        while (fileSize / sampleFactor > 500 * 1024)
-            sampleFactor *= 2;
-
-        PL.log("Sampling " + fromImage.getAbsolutePath() + " size=" + (fromImage.length() / 1024) + " scaleFactor="
-                + sampleFactor + " Resulting size= " + (fromImage.length() / 1024 / sampleFactor), context);
-        options.inSampleSize = sampleFactor;
-
-        File outputFile = new File(assetsDir, "preview.pngnr");
-        try {
-            synchronized (PreviewGenerator.class) {
-                // using the class based synchronization to prevent to much
-                // memory usage
-
-                FileOutputStream fos = new FileOutputStream(outputFile);
-
-                Bitmap inBm = BitmapFactory.decodeFile(fromImage.getAbsolutePath(), options);
-
-                Rect r = getScaledRectangle(inBm.getWidth(), inBm.getHeight(), this.targetWidth, this.targetHeight);
-
-                Bitmap cutoffScaledBitmap = Bitmap
-                        .createBitmap(inBm, r.left, r.top, r.right - r.left, r.bottom - r.top);
-
-                Bitmap outBm = Bitmap.createScaledBitmap(cutoffScaledBitmap, this.targetWidth, targetHeight, true);
-                cutoffScaledBitmap.recycle();
-                cutoffScaledBitmap = null;
-
-                inBm.recycle();
-                inBm = null;
-
-                Bitmap roundedBm = getRoundedCornerBitmap(outBm);
-                outBm.recycle();
-                outBm = null;
-
-                roundedBm.compress(CompressFormat.PNG, 100, fos);
-
-                fos.close();
-
-                // inBm.recycle();
-                // outBm.recycle();
-                // cutoffScaledBitmap.recycle();
-                roundedBm.recycle();
-            }
-        }
-
-        catch (IOException e) {
-            e.printStackTrace();
-            if (outputFile != null)
-                PL.log("Deleting output file: " + outputFile.delete(), context);
-            return false;
-        } catch (OutOfMemoryError ooe) {
-            ooe.printStackTrace();
-            PL.log("PreviewGenerator: Bitmap was too big (OOM) in generatingPreview. Skipping it. " + getMemoryStatus(),
-                    context);
-            if (outputFile != null)
-                PL.log("Deleting output file: " + outputFile.delete(), context);
-
-            return false;
-        }
-
-        return true;
-    }
-
-    private Bitmap getRoundedCornerBitmap(Bitmap bitmap) {
-        Bitmap output = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Config.ARGB_8888);
-        Canvas canvas = new Canvas(output);
-        canvas.drawARGB(0, 0, 0, 0);
-
-        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
-        final RectF rectF = new RectF(rect);
-
-        final int color = 0xffffffff;
-        final Paint paint = new Paint();
-
-        paint.setAntiAlias(true);
-        paint.setColor(color);
-        canvas.drawRoundRect(rectF, roundedCornerRadiusPx, roundedCornerRadiusPx, paint);
-
-        paint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
-
-        canvas.drawBitmap(bitmap, 0, 0, paint);
-
-        return output;
-    }
-
-    static class Filter implements FilenameFilter {
-        @Override
-        public boolean accept(File dir, String filename) {
-            boolean validExtension = !invalidExtensionPattern.matcher(filename).find();// true
-            // ||
-            // validExtensionsPattern.matcher(filename).find();
-            if (!validExtension)
-                return false;
-
-            long sizeBytes = new File(dir, filename).length();
-            boolean rightSize = (sizeBytes < getMaxSizeInBytes()) && sizeBytes > getMinSizeInBytes(); // Only
-            // check
-            // files
-            // smaller
-            // than
-            // 150
-            // KB.
-            if (!rightSize)
-                return false;
-            boolean fileMightBeAd = !filename.toLowerCase().contains("_ad");
-            return fileMightBeAd;
-        }
-    }
-
-    /**
-     * 
-     * Bigger files are bigger than smaller files.
-     * 
-     */
-    static class FileLengthComparator implements Comparator<File> {
-        @Override
-        public int compare(File f1, File f2) {
-            return (int) (f1.length() - f2.length());
-        }
-
-    }
+  }
 }

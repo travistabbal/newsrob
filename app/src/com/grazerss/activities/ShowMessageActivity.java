@@ -10,29 +10,33 @@ import android.widget.TextView;
 import com.grazerss.DashboardListActivity;
 import com.grazerss.R;
 
-public class ShowMessageActivity extends Activity {
+public class ShowMessageActivity extends Activity
+{
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.show_message);
+  @Override
+  protected void onCreate(Bundle savedInstanceState)
+  {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.show_message);
 
-		Button closeButton = (Button) findViewById(R.id.close_button);
-		closeButton.setOnClickListener(new View.OnClickListener() {
+    Button closeButton = (Button) findViewById(R.id.close_button);
+    closeButton.setOnClickListener(new View.OnClickListener()
+    {
 
-			public void onClick(View v) {
-				Intent i = new Intent(ShowMessageActivity.this, DashboardListActivity.class);
-				startActivity(i);
-				finish();
-			}
-		});
+      public void onClick(View v)
+      {
+        Intent i = new Intent(ShowMessageActivity.this, DashboardListActivity.class);
+        startActivity(i);
+        finish();
+      }
+    });
 
-		Bundle extras = getIntent().getExtras();
+    Bundle extras = getIntent().getExtras();
 
-		setTitle(extras.getString("title"));
+    setTitle(extras.getString("title"));
 
-		TextView body = (TextView) findViewById(R.id.body);
-		body.setText(extras.getString("body"));
+    TextView body = (TextView) findViewById(R.id.body);
+    body.setText(extras.getString("body"));
 
-	}
+  }
 }

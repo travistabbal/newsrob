@@ -9,118 +9,138 @@ import android.widget.Button;
 
 import com.grazerss.EntryManager;
 
-public class RelativeLayout extends android.widget.RelativeLayout {
+public class RelativeLayout extends android.widget.RelativeLayout
+{
 
-    private Button next;
-    private Button prev;
+  private Button       next;
+  private Button       prev;
 
-    private Runnable hideControlsRunnable;
+  private Runnable     hideControlsRunnable;
 
-    private boolean isShowingControls;
+  private boolean      isShowingControls;
 
-    private Handler handler = new Handler();
+  private Handler      handler = new Handler();
 
-    private float minHeightTouchableArea;
-    private float maxHeightTouchableArea;
+  private float        minHeightTouchableArea;
+  private float        maxHeightTouchableArea;
 
-    private EntryManager entryManager;
+  private EntryManager entryManager;
 
-    public RelativeLayout(Context context) {
-        super(context);
-        init(context);
+  public RelativeLayout(Context context)
+  {
+    super(context);
+    init(context);
+  }
+
+  public RelativeLayout(Context context, AttributeSet attrs)
+  {
+    super(context, attrs);
+    init(context);
+  }
+
+  public RelativeLayout(Context context, AttributeSet attrs, int defStyle)
+  {
+    super(context, attrs, defStyle);
+    init(context);
+  }
+
+  private void init(Context context)
+  {
+    hideControlsRunnable = new Runnable()
+    {
+      public void run()
+      {
+        hideControls();
+      }
+    };
+    entryManager = EntryManager.getInstance(context);
+  }
+
+  public void setNextButton(Button next)
+  {
+    this.next = next;
+  }
+
+  public void setPrevButton(Button prev)
+  {
+    this.prev = prev;
+  }
+
+  @Override
+  public final boolean dispatchTouchEvent(MotionEvent ev)
+  {
+    if (!isShowingControls && ev.getAction() == MotionEvent.ACTION_DOWN)
+    {
+      float y = ev.getY();
+      if (y > minHeightTouchableArea && y < maxHeightTouchableArea)
+        showControls();
     }
-
-    public RelativeLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init(context);
+    try
+    {
+      return super.dispatchTouchEvent(ev);
     }
-
-    public RelativeLayout(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        init(context);
+    catch (NullPointerException npe)
+    {
+      return false;
     }
+  }
 
-    private void init(Context context) {
-        hideControlsRunnable = new Runnable() {
-            public void run() {
-                hideControls();
-            }
-        };
-        entryManager = EntryManager.getInstance(context);
+  private void showControls()
+  {
+
+    if (!entryManager.isHoveringButtonsNavigationEnabled())
+      return;
+
+    if (next == null || prev == null)
+      return;
+
+    if (next.isEnabled())
+      next.setVisibility(View.VISIBLE);
+
+    if (prev.isEnabled())
+      prev.setVisibility(View.VISIBLE);
+
+    handler.removeCallbacks(hideControlsRunnable);
+    handler.postDelayed(hideControlsRunnable, 1500);
+
+    isShowingControls = true;
+  }
+
+  private void hideControls()
+  {
+    if (next == null || prev == null)
+      return;
+
+    next.setVisibility(View.GONE);
+    prev.setVisibility(View.GONE);
+
+    isShowingControls = false;
+  }
+
+  public void updateState(boolean nextAvailable, boolean previousAvailable)
+  {
+    next.setEnabled(nextAvailable);
+    prev.setEnabled(previousAvailable);
+
+    evaluateButtonsVisibility();
+  }
+
+  private void evaluateButtonsVisibility()
+  {
+    if (isShowingControls)
+    {
+      next.setVisibility(next.isEnabled() ? View.VISIBLE : View.INVISIBLE);
+      prev.setVisibility(prev.isEnabled() ? View.VISIBLE : View.INVISIBLE);
     }
+  }
 
-    public void setNextButton(Button next) {
-        this.next = next;
-    }
-
-    public void setPrevButton(Button prev) {
-        this.prev = prev;
-    }
-
-    @Override
-    public final boolean dispatchTouchEvent(MotionEvent ev) {
-        if (!isShowingControls && ev.getAction() == MotionEvent.ACTION_DOWN) {
-            float y = ev.getY();
-            if (y > minHeightTouchableArea && y < maxHeightTouchableArea)
-                showControls();
-        }
-        try {
-            return super.dispatchTouchEvent(ev);
-        } catch (NullPointerException npe) {
-            return false;
-        }
-    }
-
-    private void showControls() {
-
-        if (!entryManager.isHoveringButtonsNavigationEnabled())
-            return;
-
-        if (next == null || prev == null)
-            return;
-
-        if (next.isEnabled())
-            next.setVisibility(View.VISIBLE);
-
-        if (prev.isEnabled())
-            prev.setVisibility(View.VISIBLE);
-
-        handler.removeCallbacks(hideControlsRunnable);
-        handler.postDelayed(hideControlsRunnable, 1500);
-
-        isShowingControls = true;
-    }
-
-    private void hideControls() {
-        if (next == null || prev == null)
-            return;
-
-        next.setVisibility(View.GONE);
-        prev.setVisibility(View.GONE);
-
-        isShowingControls = false;
-    }
-
-    public void updateState(boolean nextAvailable, boolean previousAvailable) {
-        next.setEnabled(nextAvailable);
-        prev.setEnabled(previousAvailable);
-
-        evaluateButtonsVisibility();
-    }
-
-    private void evaluateButtonsVisibility() {
-        if (isShowingControls) {
-            next.setVisibility(next.isEnabled() ? View.VISIBLE : View.INVISIBLE);
-            prev.setVisibility(prev.isEnabled() ? View.VISIBLE : View.INVISIBLE);
-        }
-    }
-
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        int height = getHeight();
-        minHeightTouchableArea = height * 0.2f;
-        maxHeightTouchableArea = height * 0.8f;
-    }
+  @Override
+  protected void onSizeChanged(int w, int h, int oldw, int oldh)
+  {
+    super.onSizeChanged(w, h, oldw, oldh);
+    int height = getHeight();
+    minHeightTouchableArea = height * 0.2f;
+    maxHeightTouchableArea = height * 0.8f;
+  }
 
 }

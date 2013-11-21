@@ -1,11 +1,11 @@
 package com.grazerss.jobs;
 
-public class SwitchStorageProviderResult extends ModelUpdateResult {
+public class SwitchStorageProviderResult extends ModelUpdateResult
+{
 
-	@Override
-	public
-	String getMessage() {
-		return "Storage providers switched.";
-	}
+  @Override
+  public String getMessage()
+  {
+    return "Storage providers switched.";
+  }
 }
-

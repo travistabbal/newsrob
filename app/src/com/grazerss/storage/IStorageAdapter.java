@@ -3,19 +3,20 @@ package com.grazerss.storage;
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
 
-public interface IStorageAdapter {
-	OutputStream openFileOutput(String fileName) throws FileNotFoundException;
+public interface IStorageAdapter
+{
+  OutputStream openFileOutput(String fileName) throws FileNotFoundException;
 
-	String getAbsolutePathForAsset(String fileName);
+  String getAbsolutePathForAsset(String fileName);
 
-	float megaBytesFree();
+  float megaBytesFree();
 
-	boolean canWrite();
+  boolean canWrite();
 
-	void clear();
+  void clear();
 
-	int removeAllAssets(String atomId);
+  int removeAllAssets(String atomId);
 
-	int megaBytesThreshold();
+  int megaBytesThreshold();
 
 }

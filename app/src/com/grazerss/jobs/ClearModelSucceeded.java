@@ -1,20 +1,23 @@
 package com.grazerss.jobs;
 
-public class ClearModelSucceeded extends ModelUpdateResult {
-	public int noOfEntriesDeleted = -1;
+public class ClearModelSucceeded extends ModelUpdateResult
+{
+  public int noOfEntriesDeleted = -1;
 
-	public ClearModelSucceeded(int noOfEntriesDeleted) {
-		this.noOfEntriesDeleted = noOfEntriesDeleted;
-	}
+  public ClearModelSucceeded(int noOfEntriesDeleted)
+  {
+    this.noOfEntriesDeleted = noOfEntriesDeleted;
+  }
 
-	int getNoOfEntriesDeleted() {
-		return noOfEntriesDeleted;
-	}
+  int getNoOfEntriesDeleted()
+  {
+    return noOfEntriesDeleted;
+  }
 
-	@Override
-	public
-	String getMessage() {
-		return String.format("%s entries deleted.", noOfEntriesDeleted); // LATER
-		// Pluralize?
-	}
+  @Override
+  public String getMessage()
+  {
+    return String.format("%s entries deleted.", noOfEntriesDeleted); // LATER
+    // Pluralize?
+  }
 }

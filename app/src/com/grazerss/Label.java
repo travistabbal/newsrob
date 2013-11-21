@@ -1,48 +1,59 @@
 package com.grazerss;
 
-public class Label {
+public class Label
+{
 
-    private long id = -1;
-    private String name;
-    private int order;
+  private long   id = -1;
+  private String name;
+  private int    order;
 
-    public Label() {
-    }
+  public Label()
+  {
+  }
 
-    public Label(String name) {
-        this.name = name;
-    }
+  public Label(String name)
+  {
+    this.name = name;
+  }
 
-    Label(long id) {
-        this.id = id;
-    }
+  Label(long id)
+  {
+    this.id = id;
+  }
 
-    String getName() {
-        return name;
-    }
+  String getName()
+  {
+    return name;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setName(String name)
+  {
+    this.name = name;
+  }
 
-    long getId() {
-        return id;
-    }
+  long getId()
+  {
+    return id;
+  }
 
-    void setId(long id) {
-        this.id = id;
-    }
+  void setId(long id)
+  {
+    this.id = id;
+  }
 
-    public void setOrder(int order) {
-        this.order = order;
-    }
+  public void setOrder(int order)
+  {
+    this.order = order;
+  }
 
-    int getOrder() {
-        return order;
-    }
+  int getOrder()
+  {
+    return order;
+  }
 
-    @Override
-    public String toString() {
-        return "Label " + getName() + " (" + getId() + ")";
-    }
+  @Override
+  public String toString()
+  {
+    return "Label " + getName() + " (" + getId() + ")";
+  }
 }

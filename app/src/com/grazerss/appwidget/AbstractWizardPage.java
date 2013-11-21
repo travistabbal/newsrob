@@ -3,23 +3,28 @@
  */
 package com.grazerss.appwidget;
 
-abstract class AbstractWizardPage {
-    private boolean enabled = true;
+abstract class AbstractWizardPage
+{
+  private boolean enabled = true;
 
-    public AbstractWizardPage() {
-    }
+  public AbstractWizardPage()
+  {
+  }
 
-    boolean isEnabled() {
-        return enabled;
-    }
+  boolean isEnabled()
+  {
+    return enabled;
+  }
 
-    void setEnabled(boolean newState) {
-        this.enabled = newState;
-    }
+  void setEnabled(boolean newState)
+  {
+    this.enabled = newState;
+  }
 
-    void onEnter() {
-    }
+  void onEnter()
+  {
+  }
 
-    abstract void updateState();
+  abstract void updateState();
 
 }

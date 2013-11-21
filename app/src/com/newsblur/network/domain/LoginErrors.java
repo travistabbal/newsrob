@@ -2,14 +2,15 @@ package com.newsblur.network.domain;
 
 import com.google.gson.annotations.SerializedName;
 
-public class LoginErrors {
+public class LoginErrors
+{
 
-	@SerializedName("__all__")
-	public String[] message;
+  @SerializedName("__all__")
+  public String[] message;
 
-	@SerializedName("email")
-	public String[] email;
+  @SerializedName("email")
+  public String[] email;
 
-	@SerializedName("username")
-	public String[] username;
+  @SerializedName("username")
+  public String[] username;
 }

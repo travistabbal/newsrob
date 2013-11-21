@@ -2,16 +2,17 @@ package com.grazerss;
 
 import com.grazerss.jobs.ModelUpdateResult;
 
-public interface IEntryModelUpdateListener {
+public interface IEntryModelUpdateListener
+{
 
-	void modelUpdateStarted(boolean fastSyncOnly);
+  void modelUpdateStarted(boolean fastSyncOnly);
 
-	void modelUpdated();
-	
-	void modelUpdated(String atomId);
+  void modelUpdated();
 
-	void modelUpdateFinished(ModelUpdateResult result);
+  void modelUpdated(String atomId);
 
-	void statusUpdated();
+  void modelUpdateFinished(ModelUpdateResult result);
+
+  void statusUpdated();
 
 }

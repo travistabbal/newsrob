@@ -5,16 +5,17 @@ import com.newsblur.domain.Classifier;
 import com.newsblur.domain.Story;
 import com.newsblur.domain.UserProfile;
 
-public class StoriesResponse {
-	
-	@SerializedName("stories")
-	public Story[] stories;
-	
-	@SerializedName("user_profiles")
-	public UserProfile[] users;
-	
-	public Classifier classifiers;
-	
-	public boolean authenticated;
+public class StoriesResponse
+{
+
+  @SerializedName("stories")
+  public Story[]       stories;
+
+  @SerializedName("user_profiles")
+  public UserProfile[] users;
+
+  public Classifier    classifiers;
+
+  public boolean       authenticated;
 
 }

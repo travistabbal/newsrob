@@ -2,35 +2,42 @@ package com.grazerss.appwidget;
 
 import com.grazerss.DBQuery;
 
-public class WidgetPreferences {
+public class WidgetPreferences
+{
 
-	private String label;
-	private DBQuery dbq;
-	private String startingActivityName;
+  private String  label;
+  private DBQuery dbq;
+  private String  startingActivityName;
 
-	public String getLabel() {
-		return label;
-	}
+  public String getLabel()
+  {
+    return label;
+  }
 
-	public void setLabel(String label) {
-		this.label = label;
-	}
+  public void setLabel(String label)
+  {
+    this.label = label;
+  }
 
-	public DBQuery getDBQuery() {
-		return dbq;
+  public DBQuery getDBQuery()
+  {
+    return dbq;
 
-	}
+  }
 
-	public void setDBQuery(DBQuery dbq) {
-		this.dbq = dbq;
-	}
+  public void setDBQuery(DBQuery dbq)
+  {
+    this.dbq = dbq;
+  }
 
-	public void setStartingActivityName(String startingActivityName) {
-		this.startingActivityName = startingActivityName;
+  public void setStartingActivityName(String startingActivityName)
+  {
+    this.startingActivityName = startingActivityName;
 
-	}
+  }
 
-	public String getStartingActivityName() {
-		return startingActivityName;
-	}
+  public String getStartingActivityName()
+  {
+    return startingActivityName;
+  }
 }

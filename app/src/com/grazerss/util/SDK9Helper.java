@@ -5,31 +5,43 @@ import java.lang.reflect.Method;
 
 import android.content.SharedPreferences;
 
-public class SDK9Helper {
+public class SDK9Helper
+{
 
-    private static final Method sApplyMethod = findApplyMethod();
+  private static final Method sApplyMethod = findApplyMethod();
 
-    private static Method findApplyMethod() {
-        try {
-            Class cls = SharedPreferences.Editor.class;
-            return cls.getMethod("apply");
-        } catch (NoSuchMethodException unused) {
-            // fall through
-        }
-        return null;
+  private static Method findApplyMethod()
+  {
+    try
+    {
+      Class cls = SharedPreferences.Editor.class;
+      return cls.getMethod("apply");
     }
-
-    public static void apply(SharedPreferences.Editor editor) {
-        if (sApplyMethod != null) {
-            try {
-                sApplyMethod.invoke(editor);
-                return;
-            } catch (InvocationTargetException unused) {
-                // fall through
-            } catch (IllegalAccessException unused) {
-                // fall through
-            }
-        }
-        editor.commit();
+    catch (NoSuchMethodException unused)
+    {
+      // fall through
     }
+    return null;
+  }
+
+  public static void apply(SharedPreferences.Editor editor)
+  {
+    if (sApplyMethod != null)
+    {
+      try
+      {
+        sApplyMethod.invoke(editor);
+        return;
+      }
+      catch (InvocationTargetException unused)
+      {
+        // fall through
+      }
+      catch (IllegalAccessException unused)
+      {
+        // fall through
+      }
+    }
+    editor.commit();
+  }
 }
