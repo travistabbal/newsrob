@@ -250,7 +250,7 @@ public class FeedlyManager implements FeedlyKey
 
   public SearchFeedsResponse searchFeeds(String searchString)
   {
-    return api.searchFeeds(getAuthHeader(), searchString);
+    return api.searchFeeds(getAuthHeader(), searchString, 50);
   }
 
   public boolean starItems(List<String> entryIds)

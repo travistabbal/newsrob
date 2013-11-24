@@ -66,7 +66,7 @@ public interface FeedlyApi
       @Query("client_secret") String clientSecret, @Query("grant_type") String grantType);
 
   @GET("/v3/search/feeds")
-  public SearchFeedsResponse searchFeeds(@Header("Authorization") String authToken, @Query("q") String searchString);
+  public SearchFeedsResponse searchFeeds(@Header("Authorization") String authToken, @Query("q") String searchString, @Query("n") Integer count);
 
   @POST("/v3/subscriptions")
   public Response subscribeToFeed(@Header("Authorization") String authToken, @Body SubscribeFeedRequest request);
