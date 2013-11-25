@@ -48,7 +48,6 @@ public class FeedlyBackendProvider implements BackendProvider
   private FeedlyManager       api        = null;
   private EntryManager        entryManager;
   private SearchFeedsResponse searchResponse;
-
   private long                lastUpdate = -1;
 
   public FeedlyBackendProvider(Context context)
@@ -60,15 +59,24 @@ public class FeedlyBackendProvider implements BackendProvider
   public boolean authenticate(Context context, String email, String password, String captchaToken, String captchaAnswer)
       throws ClientProtocolException, IOException, AuthenticationFailedException
   {
-    api = new FeedlyManager(context.getApplicationContext());
+    try
+    {
+      api = new FeedlyManager(context.getApplicationContext());
 
-    if (api.isTokenExpired())
-    {
-      return api.refreshToken();
+      if (api.isTokenExpired())
+      {
+        return api.refreshToken();
+      }
+      else
+      {
+        return api.isTokenValid();
+      }
     }
-    else
+    catch (Exception e)
     {
-      return api.isTokenValid();
+      String message = "Problem during authenticate: " + e.getMessage();
+      PL.log(message, context);
+      return false;
     }
   }
 
@@ -112,7 +120,6 @@ public class FeedlyBackendProvider implements BackendProvider
       PL.log(message, context);
     }
 
-    // TODO Auto-generated method stub
     return null;
   }
 
@@ -122,85 +129,94 @@ public class FeedlyBackendProvider implements BackendProvider
       NeedsSessionException, SAXException, IllegalStateException, ParserConfigurationException, FactoryConfigurationError, SyncAPIException,
       ServerBadRequestException, AuthenticationExpiredException
   {
-    if (handleAuthenticate() == false)
+    try
     {
+      if (handleAuthenticate() == false)
+      {
+        return 0;
+      }
+
+      lastUpdate = getEntryManager().getGRUpdated();
+      Long localLastUpdate = lastUpdate;
+
+      int maxCapacity = getEntryManager().getNewsRobSettings().getStorageCapacity();
+      int currentUnreadArticlesCount = getEntryManager().getUnreadArticleCountExcludingPinned();
+      int maxDownload = maxCapacity - currentUnreadArticlesCount;
+      int fetchedArticleCount = 0;
+
+      job.setJobDescription("Fetching feed information");
+
+      // Update the feed list, make sure we have feed records for everything...
+      List<Feed> feeds = getEntryManager().findAllFeeds();
+      List<Subscriptions> subscriptions = api.getSubscriptions();
+      updateFeeds(subscriptions, feeds);
+
+      // Get starred articles
+      fetchStarredArticles(feeds, job);
+
+      job.setJobDescription("Fetching new articles");
+      getEntryManager().fireStatusUpdated();
+
+      List<Entry> entriesToBeInserted = new ArrayList<Entry>(20);
+
+      // Get unread counts
+      UnreadCountResponse unreadResponse = api.getUnreadCounts();
+      Integer unreadTotal = getTotalUnread(unreadResponse);
+
+      job.target = Math.min(unreadTotal - currentUnreadArticlesCount, maxDownload);
+      getEntryManager().fireStatusUpdated();
+
+      String continuation = null;
+      while ((fetchedArticleCount <= maxDownload) && ((currentUnreadArticlesCount + fetchedArticleCount) <= maxCapacity))
+      {
+        boolean newestFirst = getEntryManager().shouldShowNewestArticlesFirst();
+        StreamContentResponse content;
+
+        if (getEntryManager().isGrazeRssOnlySyncingEnabled())
+        {
+          content = api.getUnreadGrazeRSSOnly(newestFirst, localLastUpdate, 100, continuation);
+        }
+        else
+        {
+          content = api.getUnread(newestFirst, localLastUpdate, 100, continuation);
+        }
+
+        continuation = content.continuation;
+
+        // Store article data
+        storeArticles(content, feeds, fetchedArticleCount, job);
+
+        // Stop when the server says they don't have any more
+        // We have what we think we need, or the user asks us to
+        if ((continuation == null) || (job.actual >= job.target) || job.isCancelled())
+        {
+          break;
+        }
+      }
+
+      job.actual = job.target;
+      getEntryManager().fireStatusUpdated();
+      getEntryManager().setGRUpdated(lastUpdate);
+
+      // This might happen if they add feeds or old unread articles on the site. Do a full sync next time.
+      currentUnreadArticlesCount = getEntryManager().getUnreadArticleCountExcludingPinned();
+      if ((currentUnreadArticlesCount < unreadTotal) && (currentUnreadArticlesCount < maxCapacity))
+      {
+        lastUpdate = -1;
+        getEntryManager().setGRUpdated(lastUpdate);
+      }
+
+      // Now we have unread articles. See if any have been pinned
+      fetchPinnedArticles(feeds, job);
+
+      return fetchedArticleCount;
+    }
+    catch (Exception e)
+    {
+      String message = "Problem during fetchNewEntries: " + e.getMessage();
+      PL.log(message, context);
       return 0;
     }
-
-    lastUpdate = getEntryManager().getGRUpdated();
-    Long localLastUpdate = lastUpdate;
-
-    int maxCapacity = getEntryManager().getNewsRobSettings().getStorageCapacity();
-    int currentUnreadArticlesCount = getEntryManager().getUnreadArticleCountExcludingPinned();
-    int maxDownload = maxCapacity - currentUnreadArticlesCount;
-    int fetchedArticleCount = 0;
-
-    job.setJobDescription("Fetching feed information");
-
-    // Update the feed list, make sure we have feed records for everything...
-    List<Feed> feeds = getEntryManager().findAllFeeds();
-    List<Subscriptions> subscriptions = api.getSubscriptions();
-    updateFeeds(subscriptions, feeds);
-
-    // Get starred articles
-    fetchStarredArticles(feeds, job);
-
-    job.setJobDescription("Fetching new articles");
-    getEntryManager().fireStatusUpdated();
-
-    List<Entry> entriesToBeInserted = new ArrayList<Entry>(20);
-
-    // Get unread counts
-    UnreadCountResponse unreadResponse = api.getUnreadCounts();
-    Integer unreadTotal = getTotalUnread(unreadResponse);
-
-    job.target = Math.min(unreadTotal - currentUnreadArticlesCount, maxDownload);
-    getEntryManager().fireStatusUpdated();
-
-    String continuation = null;
-    while ((fetchedArticleCount <= maxDownload) && ((currentUnreadArticlesCount + fetchedArticleCount) <= maxCapacity))
-    {
-      boolean newestFirst = getEntryManager().shouldShowNewestArticlesFirst();
-      StreamContentResponse content;
-
-      if (getEntryManager().isGrazeRssOnlySyncingEnabled())
-      {
-        content = api.getUnreadGrazeRSSOnly(newestFirst, localLastUpdate, 100, continuation);
-      }
-      else
-      {
-        content = api.getUnread(newestFirst, localLastUpdate, 100, continuation);
-      }
-
-      continuation = content.continuation;
-
-      // Store article data
-      storeArticles(content, feeds, fetchedArticleCount, job);
-
-      // Stop when the server says they don't have any more
-      // We have what we think we need, or the user asks us to
-      if ((continuation == null) || (job.actual >= job.target) || job.isCancelled())
-      {
-        break;
-      }
-    }
-
-    job.actual = job.target;
-    getEntryManager().fireStatusUpdated();
-    getEntryManager().setGRUpdated(lastUpdate);
-
-    // This might happen if they add feeds or old unread articles on the site. Do a full sync next time.
-    currentUnreadArticlesCount = getEntryManager().getUnreadArticleCountExcludingPinned();
-    if ((currentUnreadArticlesCount < unreadTotal) && (currentUnreadArticlesCount < maxCapacity))
-    {
-      lastUpdate = -1;
-      getEntryManager().setGRUpdated(lastUpdate);
-    }
-
-    // Now we have unread articles. See if any have been pinned
-    fetchPinnedArticles(feeds, job);
-
-    return fetchedArticleCount;
   }
 
   private int fetchPinnedArticles(List<Feed> feeds, SyncJob job)
@@ -227,7 +243,7 @@ public class FeedlyBackendProvider implements BackendProvider
     }
     catch (Exception e)
     {
-      String message = "Problem during fetchStarredArticles: " + e.getMessage();
+      String message = "Problem during fetchPinnedArticles: " + e.getMessage();
       PL.log(message, context);
     }
     return 0;
@@ -295,6 +311,11 @@ public class FeedlyBackendProvider implements BackendProvider
 
   private String getLink(List<Alternate> links)
   {
+    if (links == null)
+    {
+      return null;
+    }
+
     for (Alternate link : links)
     {
       if ((link != null) && (link.href != null))
@@ -327,6 +348,11 @@ public class FeedlyBackendProvider implements BackendProvider
 
   public Integer getTotalUnread(UnreadCountResponse resp)
   {
+    if (resp == null)
+    {
+      return 0;
+    }
+
     for (UnreadCount count : resp.unreadcounts)
     {
       if ((count.id != null) && count.id.endsWith("global.all"))
@@ -355,7 +381,7 @@ public class FeedlyBackendProvider implements BackendProvider
 
   private boolean isStarred(StreamContentResponse.Item item)
   {
-    if (item.tags != null)
+    if ((item != null) && (item.tags != null))
     {
       for (Categories c : item.tags)
       {
@@ -384,29 +410,38 @@ public class FeedlyBackendProvider implements BackendProvider
 
   private int remotelyAlterPinnedState(Collection<Entry> entries, final String column, String desiredState)
   {
-    List<String> entryIds = new ArrayList<String>(entries.size());
-
-    for (Entry entry : entries)
+    try
     {
-      entryIds.add(entry.getAtomId());
-    }
+      List<String> entryIds = new ArrayList<String>(entries.size());
 
-    if (desiredState.equals("1"))
-    {
-      if (api.markItemsPinned(entryIds))
+      for (Entry entry : entries)
       {
-        getEntryManager().removePendingStateMarkers(entryIds, column);
+        entryIds.add(entry.getAtomId());
       }
-    }
-    else if (desiredState.equals("0"))
-    {
-      if (api.unPinItems(entryIds))
-      {
-        getEntryManager().removePendingStateMarkers(entryIds, column);
-      }
-    }
 
-    return entries.size();
+      if (desiredState.equals("1"))
+      {
+        if (api.markItemsPinned(entryIds))
+        {
+          getEntryManager().removePendingStateMarkers(entryIds, column);
+        }
+      }
+      else if (desiredState.equals("0"))
+      {
+        if (api.unPinItems(entryIds))
+        {
+          getEntryManager().removePendingStateMarkers(entryIds, column);
+        }
+      }
+
+      return entries.size();
+    }
+    catch (Exception e)
+    {
+      String message = "Problem during marking entry as un-/pinned: " + e.getMessage();
+      PL.log(message, context);
+      return 0;
+    }
   }
 
   private int remotelyAlterReadState(Collection<Entry> entries, final String column, String desiredState)
@@ -450,29 +485,38 @@ public class FeedlyBackendProvider implements BackendProvider
 
   private int remotelyAlterStarredState(Collection<Entry> entries, final String column, String desiredState)
   {
-    List<String> entryIds = new ArrayList<String>(entries.size());
-
-    for (Entry entry : entries)
+    try
     {
-      entryIds.add(entry.getAtomId());
-    }
+      List<String> entryIds = new ArrayList<String>(entries.size());
 
-    if (desiredState.equals("1"))
-    {
-      if (api.starItems(entryIds))
+      for (Entry entry : entries)
       {
-        getEntryManager().removePendingStateMarkers(entryIds, column);
+        entryIds.add(entry.getAtomId());
       }
-    }
-    else if (desiredState.equals("0"))
-    {
-      if (api.unStarItems(entryIds))
-      {
-        getEntryManager().removePendingStateMarkers(entryIds, column);
-      }
-    }
 
-    return entries.size();
+      if (desiredState.equals("1"))
+      {
+        if (api.starItems(entryIds))
+        {
+          getEntryManager().removePendingStateMarkers(entryIds, column);
+        }
+      }
+      else if (desiredState.equals("0"))
+      {
+        if (api.unStarItems(entryIds))
+        {
+          getEntryManager().removePendingStateMarkers(entryIds, column);
+        }
+      }
+
+      return entries.size();
+    }
+    catch (Exception e)
+    {
+      String message = "Problem during marking entry as un-/starred: " + e.getMessage();
+      PL.log(message, context);
+      return 0;
+    }
   }
 
   private int remotelyAlterState(Collection<Entry> entries, final String column, String desiredState)
@@ -524,114 +568,122 @@ public class FeedlyBackendProvider implements BackendProvider
   {
     List<String> idsToReturn = new ArrayList<String>(content.items.size());
 
-    List<Entry> entriesToBeInserted = new ArrayList<Entry>(20);
-    List<StateChange> stateChanges = new ArrayList<BackendProvider.StateChange>();
-
-    for (StreamContentResponse.Item story : content.items)
+    try
     {
-      idsToReturn.add(story.id);
+      List<Entry> entriesToBeInserted = new ArrayList<Entry>(20);
+      List<StateChange> stateChanges = new ArrayList<BackendProvider.StateChange>();
 
-      // We already have this one, maintain some state and move on...
-      Entry entry = getEntryManager().findEntryByAtomId(story.id);
-      if (entry != null)
+      for (StreamContentResponse.Item story : content.items)
       {
-        if (ReadState.PINNED.equals(entry.getReadState()))
+        idsToReturn.add(story.id);
+
+        // We already have this one, maintain some state and move on...
+        Entry entry = getEntryManager().findEntryByAtomId(story.id);
+        if (entry != null)
         {
+          if (ReadState.PINNED.equals(entry.getReadState()))
+          {
+            continue;
+          }
+
+          if (story.unread)
+          {
+            stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_READ, StateChange.OPERATION_REMOVE));
+          }
+
+          if (isStarred(story))
+          {
+            stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_STARRED, StateChange.OPERATION_ADD));
+          }
+          else
+          {
+            stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_STARRED, StateChange.OPERATION_REMOVE));
+          }
+
           continue;
         }
 
-        if (story.unread)
+        // Find the content text. Might be in the summary.
+        String contentText = "";
+
+        if (story.content != null)
         {
-          stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_READ, StateChange.OPERATION_REMOVE));
+          contentText = story.content.content;
+        }
+        else if (story.summary != null)
+        {
+          contentText = story.summary.content;
         }
 
-        if (isStarred(story))
+        // Save the entry
+        Entry newEntry = new Entry();
+        newEntry.setAtomId(story.id);
+        newEntry.setContentURL(getLink(story.alternate));
+        newEntry.setContent(contentText);
+        newEntry.setTitle(HtmlEntitiesDecoder.decodeString(story.title));
+        newEntry.setReadState(story.unread ? ReadState.UNREAD : ReadState.READ);
+        newEntry.setFeedAtomId(story.origin.streamId);
+        newEntry.setAuthor(story.author);
+        newEntry.setAlternateHRef(getLink(story.alternate));
+        newEntry.setHash(story.id);
+        newEntry.setStarred(isStarred(story));
+        newEntry.setUpdated(story.crawled == null ? new Date().getTime() : story.crawled);
+
+        // Update our last sync level..
+        setLastUpdate(story.crawled, story.updated, story.published);
+
+        // Fill in some data from the feed record....
+        Feed nrFeed = getFeedFromAtomId(feeds, story.origin.streamId);
+
+        if (nrFeed != null)
         {
-          stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_STARRED, StateChange.OPERATION_ADD));
-        }
-        else
-        {
-          stateChanges.add(new StateChange(entry.getAtomId(), StateChange.STATE_STARRED, StateChange.OPERATION_REMOVE));
-        }
+          newEntry.setFeedId(nrFeed.getId());
+          newEntry.setDownloadPref(nrFeed.getDownloadPref());
+          newEntry.setDisplayPref(nrFeed.getDisplayPref());
 
-        continue;
-      }
-
-      // Find the content text. Might be in the summary.
-      String contentText = "";
-
-      if (story.content != null)
-      {
-        contentText = story.content.content;
-      }
-      else if (story.summary != null)
-      {
-        contentText = story.summary.content;
-      }
-
-      // Save the entry
-      Entry newEntry = new Entry();
-      newEntry.setAtomId(story.id);
-      newEntry.setContentURL(getLink(story.alternate));
-      newEntry.setContent(contentText);
-      newEntry.setTitle(HtmlEntitiesDecoder.decodeString(story.title));
-      newEntry.setReadState(story.unread ? ReadState.UNREAD : ReadState.READ);
-      newEntry.setFeedAtomId(story.origin.streamId);
-      newEntry.setAuthor(story.author);
-      newEntry.setAlternateHRef(getLink(story.alternate));
-      newEntry.setHash(story.id);
-      newEntry.setStarred(isStarred(story));
-      newEntry.setUpdated(story.crawled == null ? new Date().getTime() : story.crawled);
-
-      // Update our last sync level..
-      setLastUpdate(story.crawled, story.updated, story.published);
-
-      // Fill in some data from the feed record....
-      Feed nrFeed = getFeedFromAtomId(feeds, story.origin.streamId);
-
-      if (nrFeed != null)
-      {
-        newEntry.setFeedId(nrFeed.getId());
-        newEntry.setDownloadPref(nrFeed.getDownloadPref());
-        newEntry.setDisplayPref(nrFeed.getDisplayPref());
-
-        if (story.categories != null)
-        {
-          for (Categories label : story.categories)
+          if (story.categories != null)
           {
-            newEntry.addLabel(new Label(label.label));
+            for (Categories label : story.categories)
+            {
+              newEntry.addLabel(new Label(label.label));
+            }
           }
         }
+
+        entriesToBeInserted.add(newEntry);
+
+        if (entriesToBeInserted.size() > 20)
+        {
+          job.actual = Math.min(fetchedArticleCount, job.target);
+          getEntryManager().fireStatusUpdated();
+
+          getEntryManager().insert(entriesToBeInserted);
+          entriesToBeInserted.clear();
+          getEntryManager().fireModelUpdated();
+        }
+
+        fetchedArticleCount++;
       }
 
-      entriesToBeInserted.add(newEntry);
-
-      if (entriesToBeInserted.size() > 20)
+      if (entriesToBeInserted.size() > 0)
       {
-        job.actual = Math.min(fetchedArticleCount, job.target);
-        getEntryManager().fireStatusUpdated();
-
         getEntryManager().insert(entriesToBeInserted);
         entriesToBeInserted.clear();
-        getEntryManager().fireModelUpdated();
       }
 
-      fetchedArticleCount++;
-    }
+      if (stateChanges.size() > 0)
+      {
+        getEntryManager().updateStates(stateChanges);
+        stateChanges.clear();
+      }
 
-    if (entriesToBeInserted.size() > 0)
+      getEntryManager().fireModelUpdated();
+    }
+    catch (Exception e)
     {
-      getEntryManager().insert(entriesToBeInserted);
-      entriesToBeInserted.clear();
+      String message = "Problem during storeArticles: " + e.getMessage();
+      PL.log(message, context);
     }
-
-    if (stateChanges.size() > 0)
-    {
-      getEntryManager().updateStates(stateChanges);
-      stateChanges.clear();
-    }
-
-    getEntryManager().fireModelUpdated();
 
     return idsToReturn;
   }
@@ -823,33 +875,41 @@ public class FeedlyBackendProvider implements BackendProvider
 
   private void updateFeeds(List<Subscriptions> remoteFeeds, List<Feed> feeds)
   {
-    for (Subscriptions remoteFeed : remoteFeeds)
+    try
     {
-      boolean found = false;
-
-      for (Feed nrFeed : feeds)
+      for (Subscriptions remoteFeed : remoteFeeds)
       {
-        if ((nrFeed != null) && nrFeed.getAtomId().equals(remoteFeed.id))
+        boolean found = false;
+
+        for (Feed nrFeed : feeds)
         {
-          found = true;
-          break;
+          if ((nrFeed != null) && nrFeed.getAtomId().equals(remoteFeed.id))
+          {
+            found = true;
+            break;
+          }
+        }
+
+        if (found == false)
+        {
+          Feed newFeed = new Feed();
+          newFeed.setAtomId(remoteFeed.id);
+          newFeed.setTitle(remoteFeed.title);
+          newFeed.setUrl(remoteFeed.website);
+          newFeed.setDownloadPref(Feed.DOWNLOAD_PREF_DEFAULT);
+          newFeed.setDisplayPref(Feed.DISPLAY_PREF_DEFAULT);
+
+          long id = getEntryManager().insert(newFeed);
+          newFeed.setId(id);
+
+          feeds.add(newFeed);
         }
       }
-
-      if (found == false)
-      {
-        Feed newFeed = new Feed();
-        newFeed.setAtomId(remoteFeed.id);
-        newFeed.setTitle(remoteFeed.title);
-        newFeed.setUrl(remoteFeed.website);
-        newFeed.setDownloadPref(Feed.DOWNLOAD_PREF_DEFAULT);
-        newFeed.setDisplayPref(Feed.DISPLAY_PREF_DEFAULT);
-
-        long id = getEntryManager().insert(newFeed);
-        newFeed.setId(id);
-
-        feeds.add(newFeed);
-      }
+    }
+    catch (Exception e)
+    {
+      String message = "Problem during updateFeeds: " + e.getMessage();
+      PL.log(message, context);
     }
   }
 
@@ -857,12 +917,19 @@ public class FeedlyBackendProvider implements BackendProvider
   public void updateSubscriptionList(EntryManager entryManager, Job job) throws IOException, ParserConfigurationException, SAXException,
       ServerBadRequestException, AuthenticationExpiredException
   {
-    job.setJobDescription("Fetching feed information");
+    try
+    {
+      job.setJobDescription("Fetching feed information");
 
-    // Update the feed list, make sure we have feed records for everything...
-    List<Feed> feeds = getEntryManager().findAllFeeds();
-    List<Subscriptions> subscriptions = api.getSubscriptions();
-    updateFeeds(subscriptions, feeds);
+      // Update the feed list, make sure we have feed records for everything...
+      List<Feed> feeds = getEntryManager().findAllFeeds();
+      List<Subscriptions> subscriptions = api.getSubscriptions();
+      updateFeeds(subscriptions, feeds);
+    }
+    catch (Exception e)
+    {
+      String message = "Problem during updateSubscriptionList: " + e.getMessage();
+      PL.log(message, context);
+    }
   }
-
 }
