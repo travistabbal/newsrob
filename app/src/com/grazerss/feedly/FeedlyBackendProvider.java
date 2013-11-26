@@ -278,6 +278,24 @@ public class FeedlyBackendProvider implements BackendProvider
     return 0;
   }
 
+  private String getAlternateLink(StreamContentResponse.Item story)
+  {
+    if (story.alternate == null)
+    {
+      return null;
+    }
+
+    for (Alternate link : story.alternate)
+    {
+      if ((link != null) && (link.href != null))
+      {
+        return link.href;
+      }
+    }
+
+    return null;
+  }
+
   private final EntryManager getEntryManager()
   {
     if (entryManager == null)
@@ -304,24 +322,6 @@ public class FeedlyBackendProvider implements BackendProvider
     {
       String message = "Problem during getFeedFromAtomId: " + e.getMessage();
       PL.log(message, context);
-    }
-
-    return null;
-  }
-
-  private String getLink(List<Alternate> links)
-  {
-    if (links == null)
-    {
-      return null;
-    }
-
-    for (Alternate link : links)
-    {
-      if ((link != null) && (link.href != null))
-      {
-        return link.href;
-      }
     }
 
     return null;
@@ -618,13 +618,13 @@ public class FeedlyBackendProvider implements BackendProvider
         // Save the entry
         Entry newEntry = new Entry();
         newEntry.setAtomId(story.id);
-        newEntry.setContentURL(getLink(story.alternate));
+        newEntry.setContentURL(getAlternateLink(story));
         newEntry.setContent(contentText);
         newEntry.setTitle(HtmlEntitiesDecoder.decodeString(story.title));
         newEntry.setReadState(story.unread ? ReadState.UNREAD : ReadState.READ);
         newEntry.setFeedAtomId(story.origin.streamId);
         newEntry.setAuthor(story.author);
-        newEntry.setAlternateHRef(getLink(story.alternate));
+        newEntry.setAlternateHRef(getAlternateLink(story));
         newEntry.setHash(story.id);
         newEntry.setStarred(isStarred(story));
         newEntry.setUpdated(story.crawled == null ? new Date().getTime() : story.crawled);
