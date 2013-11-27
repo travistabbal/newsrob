@@ -1257,6 +1257,12 @@ public class EntriesRetriever implements BackendProvider
   }
 
   @Override
+  public Class getLoginClass()
+  {
+    return LoginActivity.class;
+  }
+
+  @Override
   public String getServiceName()
   {
     return "Google Reader";
@@ -2132,5 +2138,4 @@ public class EntriesRetriever implements BackendProvider
 
     }
   }
-
 }
