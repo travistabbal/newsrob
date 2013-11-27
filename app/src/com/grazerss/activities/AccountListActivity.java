@@ -15,6 +15,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 
+import com.grazerss.BackendProvider;
 import com.grazerss.EntryManager;
 import com.grazerss.R;
 import com.grazerss.auth.AccountManagementUtils;
@@ -28,6 +29,37 @@ public class AccountListActivity extends ListActivity
 
   private Handler                 handler = new Handler();
   private IAccountManagementUtils accountManagementUtils;
+
+  protected void doAuth(final String accountName)
+  {
+    final IAuthenticationCallback callback = new IAuthenticationCallback()
+    {
+
+      @Override
+      public void onAuthTokenReceived(String googleAccount, String authToken)
+      {
+        EntryManager entryManager = EntryManager.getInstance(AccountListActivity.this);
+        entryManager.doLogin(googleAccount, authToken);
+
+        LoginActivity.onSuccess(entryManager, googleAccount);
+        SDK9Helper.apply(entryManager.getSharedPreferences().edit().remove(EntryManager.SETTINGS_PASS));
+        AccountListActivity.this.finish();
+      }
+
+      @Override
+      public void onError(Exception e)
+      {
+        AccountListActivity.this.onError(e);
+      }
+    };
+
+    accountManagementUtils.getAuthToken(AccountListActivity.this, handler, callback, accountName);
+  }
+
+  protected EntryManager getEntryManager()
+  {
+    return EntryManager.getInstance(this);
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState)
@@ -70,25 +102,14 @@ public class AccountListActivity extends ListActivity
       public void onClick(View v)
       {
         Intent i = new Intent();
-        i.setClass(AccountListActivity.this, LoginActivity.class);
+        BackendProvider grf = getEntryManager().getSyncInterface();
+        i.setClass(AccountListActivity.this, grf.getLoginClass());
         i.putExtra("USE_CLASSIC", true);
         startActivity(i);
         finish();
       }
     });
 
-  }
-
-  @Override
-  protected void onResume()
-  {
-    super.onResume();
-    setListAdapter(new ArrayAdapter<String>(this, R.layout.account_row, R.id.account_name, accountManagementUtils.getAccounts(this)));
-  }
-
-  protected EntryManager getEntryManager()
-  {
-    return EntryManager.getInstance(this);
   }
 
   protected void onError(Exception ex)
@@ -109,9 +130,13 @@ public class AccountListActivity extends ListActivity
 
     String message = null;
     if (ex instanceof IOException)
+    {
       message = "Could not reach the Google server. Are you online?";
+    }
     else
+    {
       message = U.t(this, R.string.login_error_dialog_message) + " " + ex.getMessage();
+    }
     dialog.setMessage(message); // i18n
     try
     {
@@ -150,29 +175,10 @@ public class AccountListActivity extends ListActivity
 
   }
 
-  protected void doAuth(final String accountName)
+  @Override
+  protected void onResume()
   {
-    final IAuthenticationCallback callback = new IAuthenticationCallback()
-    {
-
-      @Override
-      public void onError(Exception e)
-      {
-        AccountListActivity.this.onError(e);
-      }
-
-      @Override
-      public void onAuthTokenReceived(String googleAccount, String authToken)
-      {
-        EntryManager entryManager = EntryManager.getInstance(AccountListActivity.this);
-        entryManager.doLogin(googleAccount, authToken);
-
-        LoginActivity.onSuccess(entryManager, googleAccount);
-        SDK9Helper.apply(entryManager.getSharedPreferences().edit().remove(EntryManager.SETTINGS_PASS));
-        AccountListActivity.this.finish();
-      }
-    };
-
-    accountManagementUtils.getAuthToken(AccountListActivity.this, handler, callback, accountName);
+    super.onResume();
+    setListAdapter(new ArrayAdapter<String>(this, R.layout.account_row, R.id.account_name, accountManagementUtils.getAccounts(this)));
   }
 }

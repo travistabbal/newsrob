@@ -355,6 +355,12 @@ public class NewsBlurBackendProvider implements BackendProvider
   }
 
   @Override
+  public Class getLoginClass()
+  {
+    return LoginActivity.class;
+  }
+
+  @Override
   public String getServiceName()
   {
     return "NewsBlur";

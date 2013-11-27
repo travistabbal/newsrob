@@ -13,7 +13,6 @@ import android.view.View;
 import android.widget.RemoteViews;
 
 import com.grazerss.activities.ArticleListActivity;
-import com.grazerss.activities.LoginActivity;
 import com.grazerss.activities.UIHelper;
 import com.grazerss.jobs.Job;
 import com.grazerss.jobs.ModelUpdateResult;
@@ -39,10 +38,9 @@ public class NewsRobNotificationManager implements IEntryModelUpdateListener
     this.context = context.getApplicationContext();
   }
 
-  public void cancelSyncProblemNotification()
+  public void cancelNewArticlesNotification()
   {
-    nm.cancel(NOTIFICATION_SYNCHRONIZATION_STOPPED_WITH_ERROR);
-    nm.cancel(NOTIFICATION_SYNCHRONIZATION_STOPPED_SPACE_EXCEEDED);
+    nm.cancel(NOTIFICATION_NEW_ARTICLES);
   }
 
   void cancelSyncInProgressNotification()
@@ -50,6 +48,12 @@ public class NewsRobNotificationManager implements IEntryModelUpdateListener
     nm.cancel(NOTIFICATION_SYNCHRONIZATION_RUNNING);
     displaysNotification = false;
     PL.log("NOTIFICATION: Running: unset", context);
+  }
+
+  public void cancelSyncProblemNotification()
+  {
+    nm.cancel(NOTIFICATION_SYNCHRONIZATION_STOPPED_WITH_ERROR);
+    nm.cancel(NOTIFICATION_SYNCHRONIZATION_STOPPED_SPACE_EXCEEDED);
   }
 
   public void createCheckReleaseNotesNotification(Uri uri)
@@ -64,28 +68,10 @@ public class NewsRobNotificationManager implements IEntryModelUpdateListener
     nm.notify(9292, n);
   }
 
-  public void createSyncSpaceExceededProblemNotification(int reservedSpaceInMB)
-  {
-
-    Intent intent = new Intent(context, DashboardListActivity.class);
-    PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
-
-    String message = "Not enough space left to download articles.\n<" + reservedSpaceInMB + " MB free.";
-    Notification n = new Notification(R.drawable.gen_auto_notification_sync_problem, message, new Date().getTime());
-    // Notification n = new Notification(R.drawable.sync_problem,
-    // U.t(context,
-    // R.string.login_to_google_needed), new Date().getTime());
-    n.setLatestEventInfo(context, U.t(context, R.string.app_name), message, pendingIntent);
-    n.flags |= Notification.FLAG_AUTO_CANCEL;
-
-    nm.notify(NOTIFICATION_SYNCHRONIZATION_STOPPED_WITH_ERROR, n);
-
-  }
-
   private Notification createSynchronizationProblemNotification(String captchaToken, String captchaUrl, boolean loginExpired)
   {
-
-    Intent intent = new Intent().setClass(context, LoginActivity.class);
+    BackendProvider grf = SyncInterfaceFactory.getSyncInterface(context);
+    Intent intent = new Intent().setClass(context, grf.getLoginClass());
     intent.putExtra(EntryManager.EXTRA_LOGIN_EXPIRED, true);
     if (captchaToken != null)
     {
@@ -153,10 +139,9 @@ public class NewsRobNotificationManager implements IEntryModelUpdateListener
     {
 
       @Override
-      public void statusUpdated()
+      public void modelUpdated()
       {
-        updateContentView(entryManager, contentView);
-        nm.notify(NOTIFICATION_SYNCHRONIZATION_RUNNING, n);
+
       }
 
       @Override
@@ -166,9 +151,9 @@ public class NewsRobNotificationManager implements IEntryModelUpdateListener
       }
 
       @Override
-      public void modelUpdated()
+      public void modelUpdateFinished(ModelUpdateResult result)
       {
-
+        entryManager.removeListener(this);
       }
 
       @Override
@@ -178,56 +163,67 @@ public class NewsRobNotificationManager implements IEntryModelUpdateListener
       }
 
       @Override
-      public void modelUpdateFinished(ModelUpdateResult result)
+      public void statusUpdated()
       {
-        entryManager.removeListener(this);
+        updateContentView(entryManager, contentView);
+        nm.notify(NOTIFICATION_SYNCHRONIZATION_RUNNING, n);
       }
     });
 
     return n;
   }
 
-  private void updateContentView(EntryManager entryManager, RemoteViews remoteViews)
+  public void createSyncSpaceExceededProblemNotification(int reservedSpaceInMB)
   {
-    String status = "...";
-    Job runningJob = entryManager.getCurrentRunningJob();
-    if (runningJob != null)
-    {
-      status = runningJob.getJobDescription();
-      if (runningJob.isProgressMeassurable())
-      {
-        int[] progress = runningJob.getProgress();
-        int currentArticle = progress[0];
-        int allArticles = progress[1];
-        remoteViews.setProgressBar(R.id.progress_bar, allArticles, currentArticle, false);
-        status = runningJob.getJobDescription() + " (" + currentArticle + "/" + allArticles + ")" + ".";
-      }
-      else
-        remoteViews.setProgressBar(R.id.progress_bar, 0, 0, true);
 
-    }
-    else
-      remoteViews.setProgressBar(R.id.progress_bar, 0, 0, true);
-    remoteViews.setViewVisibility(R.id.cancel_sync, entryManager.isCancelRequested() ? View.GONE : View.VISIBLE);
-    remoteViews.setTextViewText(R.id.status_text, status);
-  }
+    Intent intent = new Intent(context, DashboardListActivity.class);
+    PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
 
-  public void sendSynchronizationProblemNotification(boolean loginExpired)
-  {
-    nm.notify(NOTIFICATION_SYNCHRONIZATION_STOPPED_WITH_ERROR, createSynchronizationProblemNotification(null, null, loginExpired));
-  }
+    String message = "Not enough space left to download articles.\n<" + reservedSpaceInMB + " MB free.";
+    Notification n = new Notification(R.drawable.gen_auto_notification_sync_problem, message, new Date().getTime());
+    // Notification n = new Notification(R.drawable.sync_problem,
+    // U.t(context,
+    // R.string.login_to_google_needed), new Date().getTime());
+    n.setLatestEventInfo(context, U.t(context, R.string.app_name), message, pendingIntent);
+    n.flags |= Notification.FLAG_AUTO_CANCEL;
 
-  /** LATER this method is not called at all? */
-  public void sendSynchronizationProblemNotification(String captchaToken, String captchaUrl)
-  {
-    nm.notify(NOTIFICATION_SYNCHRONIZATION_STOPPED_WITH_ERROR, createSynchronizationProblemNotification(captchaToken, captchaUrl, false));
+    nm.notify(NOTIFICATION_SYNCHRONIZATION_STOPPED_WITH_ERROR, n);
+
   }
 
   @Override
   public void finalize()
   {
     if (displaysNotification)
+    {
       PL.log("WTF? Notification wasn't cleared.", context);
+    }
+  }
+
+  public void modelUpdated()
+  {
+  }
+
+  public void modelUpdated(String atomId)
+  {
+  }
+
+  public void modelUpdateFinished(ModelUpdateResult result)
+  {
+    cancelSyncInProgressNotification();
+  }
+
+  public void modelUpdateStarted(boolean fastSyncOnly)
+  {
+    // clear old and error notifications
+    // cancelAllNotifications();
+    cancelSyncProblemNotification();
+
+    // set during notification
+    if (EntryManager.getInstance(context).isSyncInProgressNotificationEnabled())
+    {
+      sendSynchronizationRunningNotification(fastSyncOnly);
+    }
   }
 
   public void notifyNewArticles(EntryManager entryManager, long startDate, int noOfNewArticles)
@@ -235,11 +231,15 @@ public class NewsRobNotificationManager implements IEntryModelUpdateListener
     cancelNewArticlesNotification();
 
     if (noOfNewArticles < 1)
+    {
       return;
+    }
 
     SharedPreferences prefs = entryManager.getSharedPreferences();
     if (!prefs.getBoolean("settings_notifications_enabled", true))
+    {
       return;
+    }
 
     Intent intent = new Intent(context, ArticleListActivity.class);
 
@@ -272,18 +272,22 @@ public class NewsRobNotificationManager implements IEntryModelUpdateListener
     // n.defaults |= Notification.DEFAULT_SOUND;
 
     if (prefs.getString("settings_notify_with_sound_url", "").length() != 0)
+    {
       n.sound = Uri.parse(prefs.getString("settings_notify_with_sound_url", ""));
+    }
 
     if (prefs.getBoolean("settings_notify_with_vibration_enabled", true))
+    {
       n.vibrate = new long[] { 0, 100, 1000, 100, 1000, 100 };
+    }
 
     nm.notify(NOTIFICATION_NEW_ARTICLES, n);
 
   }
 
-  public void cancelNewArticlesNotification()
+  public void sendSynchronizationProblemNotification(boolean loginExpired)
   {
-    nm.cancel(NOTIFICATION_NEW_ARTICLES);
+    nm.notify(NOTIFICATION_SYNCHRONIZATION_STOPPED_WITH_ERROR, createSynchronizationProblemNotification(null, null, loginExpired));
   }
 
   private void sendSynchronizationRunningNotification(boolean fastSyncOnly)
@@ -294,32 +298,37 @@ public class NewsRobNotificationManager implements IEntryModelUpdateListener
     PL.log("NOTIFICATION: Running: set", context);
   }
 
-  public void modelUpdated(String atomId)
-  {
-  }
-
-  public void modelUpdateFinished(ModelUpdateResult result)
-  {
-    cancelSyncInProgressNotification();
-  }
-
-  public void modelUpdateStarted(boolean fastSyncOnly)
-  {
-    // clear old and error notifications
-    // cancelAllNotifications();
-    cancelSyncProblemNotification();
-
-    // set during notification
-    if (EntryManager.getInstance(context).isSyncInProgressNotificationEnabled())
-      sendSynchronizationRunningNotification(fastSyncOnly);
-  }
-
-  public void modelUpdated()
-  {
-  }
-
   public void statusUpdated()
   {
 
+  }
+
+  private void updateContentView(EntryManager entryManager, RemoteViews remoteViews)
+  {
+    String status = "...";
+    Job runningJob = entryManager.getCurrentRunningJob();
+    if (runningJob != null)
+    {
+      status = runningJob.getJobDescription();
+      if (runningJob.isProgressMeassurable())
+      {
+        int[] progress = runningJob.getProgress();
+        int currentArticle = progress[0];
+        int allArticles = progress[1];
+        remoteViews.setProgressBar(R.id.progress_bar, allArticles, currentArticle, false);
+        status = runningJob.getJobDescription() + " (" + currentArticle + "/" + allArticles + ")" + ".";
+      }
+      else
+      {
+        remoteViews.setProgressBar(R.id.progress_bar, 0, 0, true);
+      }
+
+    }
+    else
+    {
+      remoteViews.setProgressBar(R.id.progress_bar, 0, 0, true);
+    }
+    remoteViews.setViewVisibility(R.id.cancel_sync, entryManager.isCancelRequested() ? View.GONE : View.VISIBLE);
+    remoteViews.setTextViewText(R.id.status_text, status);
   }
 }

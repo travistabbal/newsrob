@@ -170,6 +170,8 @@ public interface BackendProvider
       IOException, NeedsSessionException, SAXException, IllegalStateException, ParserConfigurationException, FactoryConfigurationError,
       SyncAPIException, ServerBadRequestException, AuthenticationExpiredException;
 
+  public Class getLoginClass();
+
   public String getServiceName();
 
   public String getServiceUrl();

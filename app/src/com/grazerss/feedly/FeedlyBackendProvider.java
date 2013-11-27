@@ -327,6 +327,12 @@ public class FeedlyBackendProvider implements BackendProvider
     return null;
   }
 
+  @Override
+  public Class getLoginClass()
+  {
+    return FeedlyLoginActivity.class;
+  }
+
   private void getOlderArticles(UnreadCountResponse unreadResponse)
   {
     // select atom_id, updated_utc from entries order by updated_utc desc limit 1;

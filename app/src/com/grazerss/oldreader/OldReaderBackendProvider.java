@@ -78,7 +78,6 @@ public class OldReaderBackendProvider implements BackendProvider
       ServerBadRequestException, AuthenticationExpiredException
   {
     // TODO Auto-generated method stub
-
   }
 
   @Override
@@ -308,6 +307,12 @@ public class OldReaderBackendProvider implements BackendProvider
     }
 
     return null;
+  }
+
+  @Override
+  public Class getLoginClass()
+  {
+    return LoginActivity.class;
   }
 
   @Override
