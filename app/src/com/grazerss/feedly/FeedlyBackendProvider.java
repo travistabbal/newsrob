@@ -45,10 +45,11 @@ import com.grazerss.jobs.Job;
 public class FeedlyBackendProvider implements BackendProvider
 {
   private Context             context;
-  private FeedlyManager       api        = null;
+  private FeedlyManager       api                 = null;
   private EntryManager        entryManager;
   private SearchFeedsResponse searchResponse;
-  private long                lastUpdate = -1;
+  private long                lastUpdate          = -1;
+  private Integer             fetchedArticleCount = 0;
 
   public FeedlyBackendProvider(Context context)
   {
@@ -75,7 +76,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during authenticate: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
       return false;
     }
   }
@@ -117,7 +118,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during discoverFeeds: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
     }
 
     return null;
@@ -142,7 +143,6 @@ public class FeedlyBackendProvider implements BackendProvider
       int maxCapacity = getEntryManager().getNewsRobSettings().getStorageCapacity();
       int currentUnreadArticlesCount = getEntryManager().getUnreadArticleCountExcludingPinned();
       int maxDownload = maxCapacity - currentUnreadArticlesCount;
-      int fetchedArticleCount = 0;
 
       job.setJobDescription("Fetching feed information");
 
@@ -163,6 +163,8 @@ public class FeedlyBackendProvider implements BackendProvider
       UnreadCountResponse unreadResponse = api.getUnreadCounts();
       Integer unreadTotal = getTotalUnread(unreadResponse);
 
+      fetchedArticleCount = 0;
+      job.actual = 0;
       job.target = Math.min(unreadTotal - currentUnreadArticlesCount, maxDownload);
       getEntryManager().fireStatusUpdated();
 
@@ -184,7 +186,7 @@ public class FeedlyBackendProvider implements BackendProvider
         continuation = content.continuation;
 
         // Store article data
-        storeArticles(content, feeds, fetchedArticleCount, job);
+        storeArticles(content, feeds, job);
 
         // Stop when the server says they don't have any more
         // We have what we think we need, or the user asks us to
@@ -214,7 +216,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during fetchNewEntries: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
       return 0;
     }
   }
@@ -244,7 +246,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during fetchPinnedArticles: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
     }
     return 0;
   }
@@ -255,25 +257,25 @@ public class FeedlyBackendProvider implements BackendProvider
     {
       job.setJobDescription("Fetching starred articles");
 
-      int fetchedArticlesCount = 0;
+      fetchedArticleCount = 0;
       int maxStarredArticles = getEntryManager().getNoOfStarredArticlesToKeep();
 
       // long lastStarUpdate = getEntryManager().getLastStarredSync();
       // getEntryManager().setLastStarredSync(Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis());
 
       StreamContentResponse content = api.getSaved(getEntryManager().shouldShowNewestArticlesFirst(), null, maxStarredArticles, null);
-      List<String> ids = storeArticles(content, feeds, fetchedArticlesCount, job);
+      List<String> ids = storeArticles(content, feeds, job);
 
       // Update existing records to catch unstarred records
       getEntryManager().populateTempTable(TempTable.STARRED, ids);
       getEntryManager().updateStatesFromTempTable(ArticleDbState.STARRED, TempTable.STARRED);
 
-      return fetchedArticlesCount;
+      return fetchedArticleCount;
     }
     catch (Exception e)
     {
       String message = "Problem during fetchStarredArticles: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
     }
     return 0;
   }
@@ -321,7 +323,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during getFeedFromAtomId: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
     }
 
     return null;
@@ -379,7 +381,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during handleAuthenticate: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
     }
 
     return false;
@@ -445,7 +447,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during marking entry as un-/pinned: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
       return 0;
     }
   }
@@ -483,7 +485,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during marking entry as un-/read: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
     }
 
     return 0;
@@ -520,7 +522,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during marking entry as un-/starred: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
       return 0;
     }
   }
@@ -570,7 +572,7 @@ public class FeedlyBackendProvider implements BackendProvider
     activity.startActivity(new Intent().setClass(context, FeedlyLoginActivity.class));
   }
 
-  private List<String> storeArticles(StreamContentResponse content, List<Feed> feeds, int fetchedArticleCount, SyncJob job)
+  private List<String> storeArticles(StreamContentResponse content, List<Feed> feeds, SyncJob job)
   {
     List<String> idsToReturn = new ArrayList<String>(content.items.size());
 
@@ -626,7 +628,7 @@ public class FeedlyBackendProvider implements BackendProvider
         newEntry.setAtomId(story.id);
         newEntry.setContentURL(getAlternateLink(story));
         newEntry.setContent(contentText);
-        newEntry.setTitle(HtmlEntitiesDecoder.decodeString(story.title));
+        newEntry.setTitle(HtmlEntitiesDecoder.decodeString(story.title != null ? story.title : ""));
         newEntry.setReadState(story.unread ? ReadState.UNREAD : ReadState.READ);
         newEntry.setFeedAtomId(story.origin.streamId);
         newEntry.setAuthor(story.author);
@@ -658,7 +660,7 @@ public class FeedlyBackendProvider implements BackendProvider
 
         entriesToBeInserted.add(newEntry);
 
-        if (entriesToBeInserted.size() > 20)
+        if (entriesToBeInserted.size() >= 20)
         {
           job.actual = Math.min(fetchedArticleCount, job.target);
           getEntryManager().fireStatusUpdated();
@@ -688,7 +690,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during storeArticles: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
     }
 
     return idsToReturn;
@@ -723,7 +725,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during syncArticles: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
     }
 
     return false;
@@ -805,7 +807,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during syncArticles: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
     }
     return 0;
   }
@@ -853,7 +855,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during syncServerReadStates: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
     }
   }
 
@@ -875,7 +877,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during unsubscribeFeed: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
     }
   }
 
@@ -915,7 +917,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during updateFeeds: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
     }
   }
 
@@ -935,7 +937,7 @@ public class FeedlyBackendProvider implements BackendProvider
     catch (Exception e)
     {
       String message = "Problem during updateSubscriptionList: " + e.getMessage();
-      PL.log(message, context);
+      PL.log(message, e, context);
     }
   }
 }
