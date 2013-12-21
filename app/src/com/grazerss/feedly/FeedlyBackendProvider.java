@@ -171,16 +171,25 @@ public class FeedlyBackendProvider implements BackendProvider
       String continuation = null;
       while ((fetchedArticleCount <= maxDownload) && ((currentUnreadArticlesCount + fetchedArticleCount) <= maxCapacity))
       {
+        // How many articles to request.
+        int downloadRequestSize = Math.min(100, Math.max(0, (maxDownload - fetchedArticleCount)));
+
+        // If there's nothing to download, just get out.
+        if (downloadRequestSize == 0)
+        {
+          break;
+        }
+
         boolean newestFirst = getEntryManager().shouldShowNewestArticlesFirst();
         StreamContentResponse content;
 
         if (getEntryManager().isGrazeRssOnlySyncingEnabled())
         {
-          content = api.getUnreadGrazeRSSOnly(newestFirst, localLastUpdate, 100, continuation);
+          content = api.getUnreadGrazeRSSOnly(newestFirst, localLastUpdate, downloadRequestSize, continuation);
         }
         else
         {
-          content = api.getUnread(newestFirst, localLastUpdate, 100, continuation);
+          content = api.getUnread(newestFirst, localLastUpdate, downloadRequestSize, continuation);
         }
 
         continuation = content.continuation;
