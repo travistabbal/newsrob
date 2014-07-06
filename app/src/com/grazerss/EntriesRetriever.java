@@ -200,6 +200,7 @@ public class EntriesRetriever implements BackendProvider
       // fullyQualifiedTagName + " = " + value);
       if ("/feed/id".equals(fullyQualifiedTagName))
       {
+        entryManager.setGoogleUserId("-");
         Matcher m = PATTERN_GOOGLE_USER_ID_IN_FEED_ID.matcher(value);
         if (m.find())
         {
@@ -418,7 +419,7 @@ public class EntriesRetriever implements BackendProvider
   // +
   // NEWSROB_IGNORE_LABEL;
 
-  private static final String  CLIENT_NAME                           = "newsrob";
+  private static final String  CLIENT_NAME                           = "grazerss";
   private static final String  GOOGLE_SCHEME                         = "http://www.google.com/reader/";
   private static final String  GOOGLE_SCHEMA                         = "http://www.google.com/schemas/reader/atom/";
   private static final String  EXCLUDE_READ                          = "xt=" + GOOGLE_STATE_READ;
@@ -488,7 +489,7 @@ public class EntriesRetriever implements BackendProvider
     NewsRobHttpClient httpClient = NewsRobHttpClient.newInstance(false, context);
     try
     {
-      HttpPost authenticateRequest = new HttpPost("https://www.google.com/accounts/ClientLogin"); // ?client="
+      HttpPost authenticateRequest = new HttpPost("https://www.inoreader.com/accounts/ClientLogin"); // ?client="
       // +
       // CLIENT_NAME);
 
@@ -1251,7 +1252,7 @@ public class EntriesRetriever implements BackendProvider
   {
     if (apiProtocolAndHost == null)
     {
-      apiProtocolAndHost = NewsRob.getDebugProperties(context).getProperty("apiProtocolAndHost", "https://www.google.com");
+      apiProtocolAndHost = getServiceUrl();
     }
     return apiProtocolAndHost;
   }
@@ -1271,7 +1272,8 @@ public class EntriesRetriever implements BackendProvider
   @Override
   public String getServiceUrl()
   {
-    return "http://www.google.com/reader";
+    // return "http://www.inoreader.com";
+    return "http://10.1.0.110:8888";
   }
 
   private Collection<StateChange> getStateChangesFromGR(long lastUpdated) throws IOException, ParserConfigurationException, SAXException,

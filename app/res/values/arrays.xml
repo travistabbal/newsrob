@@ -141,12 +141,14 @@
     <item>NewsBlur</item>
     <item>The Old Reader</item>
     <item>Feedly</item>
+    <item>InoReader</item>
     </string-array>
   <string-array
     name="service_provider_values">
     <item>com.grazerss.NewsBlurBackendProvider</item>
     <item>com.grazerss.oldreader.OldReaderBackendProvider</item>
     <item>com.grazerss.feedly.FeedlyBackendProvider</item>
+    <item>com.grazerss.EntriesRetriever</item>
     </string-array>
   
   <string-array
