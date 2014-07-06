@@ -162,8 +162,8 @@ public class ShowArticleActivity extends Activity implements IEntryModelUpdateLi
         }
       }
 
-      // Reflow Text on 4.4.x
-      if (SDKVersionUtil.getVersion() >= 19)
+      // Reflow Text if requested
+      if (getEntryManager().isTextReflowOnZoomEnabled())
       {
         if (reflowRunnablePending == false)
         {

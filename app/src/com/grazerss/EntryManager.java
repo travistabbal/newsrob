@@ -162,6 +162,7 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
   static final String         SETTINGS_HOVERING_BUTTONS_NAVIGATION_ENABLED         = "settings_hovering_buttons_navigation_enabled";
 
   public static final String  SETTINGS_HOVERING_ZOOM_CONTROLS_ENABLED              = "settings_hovering_zoom_controls_enabled";
+  public static final String  SETTINGS_FORCE_TEXT_REFLOW_ON_ZOOM                   = "settings_text_reflow_on_zoom_enabled";
 
   public static final String  SETTINGS_HW_ACCEL_ADV_ENABLED                        = "settings_hw_acceleration_adv_enabled";
   public static final String  SETTINGS_HW_ACCEL_LISTS_ENABLED                      = "settings_hw_acceleration_lists_enabled";
@@ -1860,6 +1861,11 @@ public class EntryManager implements SharedPreferences.OnSharedPreferenceChangeL
     }
 
     return true;
+  }
+
+  public boolean isTextReflowOnZoomEnabled()
+  {
+    return getSharedPreferences().getBoolean(SETTINGS_FORCE_TEXT_REFLOW_ON_ZOOM, false);
   }
 
   public boolean isUsageDataCollectionPermitted()

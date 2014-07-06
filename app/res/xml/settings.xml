@@ -166,7 +166,12 @@
                 android:defaultValue="true"
                 android:key="settings_hovering_buttons_navigation_enabled"
                 android:summary="@string/settings_hovering_buttons_navigation_enabled_summary"
-                android:title="@string/settings_hovering_buttons_navigation_enabled_title" />
+                android:title="@string/settings_hovering_buttons_navigation_enabled_title" />            
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="settings_text_reflow_on_zoom_enabled"
+                android:summary="@string/settings_text_reflow_on_zoom_enabled_summary"
+                android:title="@string/settings_text_reflow_on_zoom_enabled_title" />
             <CheckBoxPreference
                 android:defaultValue="true"
                 android:key="settings_volume_control_navigation_enabled"

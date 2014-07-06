@@ -128,6 +128,9 @@ Otherwise you will be asked again for your credentials every two weeks.
     <string name="settings_hovering_buttons_navigation_enabled_title">Hovering Buttons Nav</string>
     <string name="settings_hovering_buttons_navigation_enabled_summary">Show hovering buttons to flip through the articles.</string>
 
+    <string name="settings_text_reflow_on_zoom_enabled_title">Reflow Text</string>
+    <string name="settings_text_reflow_on_zoom_enabled_summary">Reflow text when zooming the article.</string>
+    
     <string name="settings_volume_control_navigation_enabled_title">Volume Up/Down Nav</string>
     <string name="settings_volume_control_navigation_enabled_summary">Flip through the articles using the volume controls.</string>
 
