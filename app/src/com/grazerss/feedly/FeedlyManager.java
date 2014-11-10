@@ -16,7 +16,7 @@ import com.grazerss.EntryManager;
 
 public class FeedlyManager implements FeedlyKey
 {
-  private FeedlyApi     api = new RestAdapter.Builder().setServer(FeedlyApi.BASE_URL).build().create(FeedlyApi.class);
+  private FeedlyApi     api = new RestAdapter.Builder().setEndpoint(FeedlyApi.BASE_URL).build().create(FeedlyApi.class);
   private final Context context;
   private String        userId;
   private String        accessCode;

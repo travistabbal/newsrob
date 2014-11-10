@@ -14,3 +14,5 @@ sd.img*
 /app/.settings/org.eclipse.jdt.core.prefs
 *.apk
 /app/src/com/grazerss/feedly/FeedlyKey.java
+
+___*

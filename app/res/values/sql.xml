@@ -210,7 +210,7 @@ AS\n
        AND elas.label_id = labels._id
 
      GROUP BY
-       _id
+       labels._id
 
    UNION
 
@@ -232,7 +232,7 @@ AS\n
        AND lower(labels.name) &lt;&gt; \"pinned\" 
 
      GROUP BY
-       _id\n
+       labels._id\n
 ---\n
    
    UNION

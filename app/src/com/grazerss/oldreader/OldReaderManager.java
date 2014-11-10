@@ -11,7 +11,7 @@ public class OldReaderManager
   private static final String FOLDER_SEARCH_PREFIX = "user/-/label/";
   // private static final String SERVER = "http://10.1.0.110:8080";
   private static final String SERVER               = "https://theoldreader.com";
-  private OldReaderApi        api                  = new RestAdapter.Builder().setServer(SERVER).build().create(OldReaderApi.class);
+  private OldReaderApi        api                  = new RestAdapter.Builder().setEndpoint(SERVER).build().create(OldReaderApi.class);
   private String              authToken            = null;
 
   private String getAuthHeader()
