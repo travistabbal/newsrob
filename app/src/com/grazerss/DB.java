@@ -208,7 +208,7 @@ public class DB extends SQLiteOpenHelper
 
   private static final String DATABASE_NAME             = "newsrob.db";
 
-  private static final int    DATABASE_VERSION          = 33;
+  private static final int    DATABASE_VERSION          = 34;
 
   private static final String CREATE_TABLE_TEMP_IDS_SQL = "CREATE TABLE IF NOT EXISTS temp_ids (atom_id TEXT PRIMARY KEY, timestamp INTEGER);";
 
@@ -1966,6 +1966,12 @@ public class DB extends SQLiteOpenHelper
       db.execSQL("DROP VIEW IF EXISTS entries_view;");
       Log.d(TAG, "Re-Creating entries view.");
       db.execSQL(context.getString(R.string.sql_create_view));
+    }
+    if (oldVersion < 34)
+    {
+      db.execSQL("DROP VIEW IF EXISTS dashboard_view;");
+      Log.d(TAG, "Re-Creating dashboard view.");
+      db.execSQL(context.getString(R.string.sql_create_dashboard_view));
     }
 
   }
