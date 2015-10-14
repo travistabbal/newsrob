@@ -1843,7 +1843,7 @@ public class ShowArticleActivity extends Activity implements IEntryModelUpdateLi
     try
     {
       feedContentAvailableLocal = ((selectedEntry.getDownloaded() == Entry.STATE_DOWNLOADED_FEED_CONTENT) || (selectedEntry.getDownloaded() == Entry.STATE_DOWNLOADED_FULL_PAGE))
-          && (getContentResolver().openFileDescriptor(Uri.parse(localUrl), null) != null);
+          && (getContentResolver().openFileDescriptor(Uri.parse(localUrl), "r") != null);
     }
     catch (FileNotFoundException e)
     {
