@@ -448,9 +448,7 @@ public class OldReaderBackendProvider implements BackendProvider
         return 0;
       }
 
-      syncServerReadStates(entryManager, syncJob);
-
-      int noOfUpdated = 0;
+      int noOfUpdated = syncServerReadStates(entryManager, syncJob);
 
       String[] fields = { DB.Entries.READ_STATE_PENDING, DB.Entries.STARRED_STATE_PENDING
       // DB.Entries.PINNED_STATE_PENDING
@@ -521,7 +519,7 @@ public class OldReaderBackendProvider implements BackendProvider
     return 0;
   }
 
-  private void syncServerReadStates(EntryManager entryManager, SyncJob job)
+  private int syncServerReadStates(EntryManager entryManager, SyncJob job)
   {
     try
     {
@@ -537,6 +535,8 @@ public class OldReaderBackendProvider implements BackendProvider
       String message = "Problem during syncServerReadStates: " + e.getMessage();
       PL.log(message, context);
     }
+
+    return 0;
   }
 
   @Override

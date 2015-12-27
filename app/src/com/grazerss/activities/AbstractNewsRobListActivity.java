@@ -1126,6 +1126,24 @@ public abstract class AbstractNewsRobListActivity extends ListActivity implement
     modelUpdated();
   }
 
+  protected void requestUploadOnlyRefresh()
+  {
+    if (NewsRob.isDebuggingEnabled(this))
+    {
+      PL.log("ANRLA: User requested upload refresh manually.", this);
+    }
+
+    if (getEntryManager().needsSession())
+    {
+      BackendProvider provider = SyncInterfaceFactory.getSyncInterface(this);
+      provider.startLogin(this, getApplicationContext());
+    }
+    else
+    {
+      getEntryManager().requestSynchronization(true);
+    }
+  }
+
   private void setupButtons()
   {
 
@@ -1167,6 +1185,22 @@ public abstract class AbstractNewsRobListActivity extends ListActivity implement
           requestRefresh();
           Toast.makeText(AbstractNewsRobListActivity.this, "Refresh", Toast.LENGTH_SHORT).show();
         }
+      }
+    });
+
+    refreshButton.setLongClickable(true);
+    refreshButton.setOnLongClickListener(new View.OnLongClickListener()
+    {
+
+      @Override
+      public boolean onLongClick(View v)
+      {
+        if ("Refresh".equals(v.getTag()))
+        {
+          requestUploadOnlyRefresh();
+          Toast.makeText(AbstractNewsRobListActivity.this, "Upload Only Refresh", Toast.LENGTH_SHORT).show();
+        }
+        return true;
       }
     });
 

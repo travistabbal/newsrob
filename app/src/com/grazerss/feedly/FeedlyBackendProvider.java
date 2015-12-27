@@ -751,9 +751,7 @@ public class FeedlyBackendProvider implements BackendProvider
         return 0;
       }
 
-      syncServerReadStates(entryManager, syncJob);
-
-      int noOfUpdated = 0;
+      int noOfUpdated = syncServerReadStates(entryManager, syncJob);
 
       String[] fields = { DB.Entries.READ_STATE_PENDING, DB.Entries.STARRED_STATE_PENDING, DB.Entries.PINNED_STATE_PENDING };
       for (String f : fields)
@@ -821,7 +819,7 @@ public class FeedlyBackendProvider implements BackendProvider
     return 0;
   }
 
-  private void syncServerReadStates(EntryManager entryManager, SyncJob job)
+  private int syncServerReadStates(EntryManager entryManager, SyncJob job)
   {
     try
     {
@@ -860,12 +858,15 @@ public class FeedlyBackendProvider implements BackendProvider
 
       getEntryManager().updateStates(stateChanges);
       job.setJobDescription("Server read states synced");
+      return stateChanges.size();
     }
     catch (Exception e)
     {
       String message = "Problem during syncServerReadStates: " + e.getMessage();
       PL.log(message, e, context);
     }
+
+    return 0;
   }
 
   @Override
